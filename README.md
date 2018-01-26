@@ -1,6 +1,6 @@
-# AzDevBase
+# Azldi
 
-A general purpose seed project base
+A lightweight dependency injection implementation
 
 Run `npm install`
 

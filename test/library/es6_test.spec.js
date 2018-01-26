@@ -85,7 +85,5 @@ describe('Es6 features test', function(){
         expect(result).to.equal(21);
       });
     });
-
   });
-
 });

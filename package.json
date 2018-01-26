@@ -1,7 +1,7 @@
 {
-  "name": "az-dev-base",
-  "version": "1.0.0",
-  "description": "A general purpose seed project base",
+  "name": "azldi",
+  "version": "0.1.0",
+  "description": "A lightweight dependency injection implementation",
   "main": "dist/library/index.js",
   "repository": {
     "type": "git"
