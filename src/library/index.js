@@ -10,15 +10,11 @@ export default class Azldi {
   constructor(){
     this.classInfoMap = {};
     this.classInfoArray = [];
-
-    this.containerInterface = {
-      get: this.get,
-    };
   }
 
   get = (name) => {
-    let metadata = this.classInfoMap[name];
-    return metadata && metadata.inst;
+    let classInfo = this.classInfoMap[name];
+    return classInfo && classInfo.instance;
   };
 
   getClassInfo = (name) => {
@@ -37,52 +33,40 @@ export default class Azldi {
     return true;
   }
 
-  _run(functionName, args, callback, runSync = true){
-    let componentMetadataMap = {};
-    let componentMetadataArray = [];
+  _run(functionName, args, appendArgs, callback, runSync = true){
+    let metadataMap = {};
+    let metadataArray = [];
     this.classInfoArray.map(classInfo => {
       let componentMetadata = new ComponentMetadata({
         classInfo,
-        componentMetadataMap,
+        metadataMap,
         functionName,
-        runSync,
+        appendArgs: appendArgs[classInfo.name],
       });
-      componentMetadataMap[componentMetadata.name] = componentMetadata;
-      componentMetadataArray.push(componentMetadata);
+      metadataMap[componentMetadata.name] = componentMetadata;
+      metadataArray.push(componentMetadata);
     });
 
-    let results = componentMetadataArray.map(componentMetadata => {
-      let result = componentMetadata.getProcessFunc({ callback })(...args);
+    let results = metadataArray.map(componentMetadata => {
+      let result = componentMetadata.getProcessFunc({
+        callback,
+        runSync,
+      })(...args);
       return result;
     });
 
-    if(runSync){
-      return results;
-    }
-
-    return Promise.all(results);
+    return runSync ? results : Promise.all(results);
   }
 
-  digest({ onCreate = (() => {}) } = {}){
-    let cb = data => {
-      let {result, classInfo} = data;
-      this.classInfoMap[classInfo.name].setInstance(result);
-      onCreate(data);
-    }
-
-    return this._run(undefined, [], cb, true);
+  digest({ onCreate = (() => {}), appendArgs = {} } = {}){
+    return this._run(undefined, [], appendArgs, onCreate, true);
   }
 
-
-  start(...args){
-    return this._run('start', [...args], undefined, false);
+  run(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}){
+    return this._run(functionName, args, appendArgs, onResult, true);
   }
 
-  run(functionName, args, { onResult = (() => {}) } = {}){
-    return this._run(functionName, args, onResult, true);
-  }
-
-  runAsync(functionName, args, { onResult = (() => {}) } = {}){
-    return this._run(functionName, args, onResult, false);
+  runAsync(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}){
+    return this._run(functionName, args, appendArgs, onResult, false);
   }
 }

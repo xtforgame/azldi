@@ -1,10 +1,10 @@
 const privateData = new WeakMap();
 
 export default class InjectedResult {
-  constructor(componentMetadataMap, depComponentNames){
+  constructor(metadataMap, depComponentNames){
     let deps = {};
     depComponentNames.map(depComponentName => {
-      let classInfo = componentMetadataMap[depComponentName].classInfo;
+      let classInfo = metadataMap[depComponentName].classInfo;
       let instance = classInfo.instance;
       deps[depComponentName] = {
         classInfo,
@@ -13,7 +13,7 @@ export default class InjectedResult {
     });
 
     privateData.set(this, {
-      componentMetadataMap,
+      metadataMap,
       depComponentNames,
       deps,
     });
@@ -42,5 +42,10 @@ export default class InjectedResult {
   getResults(){
     let { results } = privateData.get(this);
     return results;
+  }
+
+  inject(results, args){
+    this.setResults(results);
+    return [this, ...args];
   }
 }

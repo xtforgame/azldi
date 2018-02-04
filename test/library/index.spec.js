@@ -44,6 +44,7 @@ describe('Main Test Cases', function(){
 
       let azldi = new Azldi();
 
+      // azldi.register(Classes);
       Classes.forEach(Class => {
         azldi.register(Class);
       });
@@ -54,18 +55,40 @@ describe('Main Test Cases', function(){
         expect(classInfo.Class, 'classInfo.Class').to.equal(Class);
       });
 
+      let digestOrder = [
+        MyService00,
+        MyService02,
+        MyService01,
+      ];
+      let digestIndex = 0;
+
       let results = azldi.digest({
-        // onCreate: (obj) => {console.log('obj :', obj);},
+        onCreate: (obj) => {
+          expect(obj.result, 'obj.result').to.exist;
+          expect(obj.result.constructor, 'obj.result.constructor').to.equal(digestOrder[digestIndex]);
+          digestIndex++;
+        },
+        appendArgs: {
+          myService02: [4, 5, 6],
+        },
       });
 
-      console.log('results :', results);
+      // console.log('results :', results);
 
-      azldi.start()
+      return azldi.runAsync('start', [])
       .then(results => {
-        console.log('results :', results);
+        // console.log('results :', results);
+        expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
+        return azldi.runAsync('start', [1, 2, 3], {
+          appendArgs: {
+            myService02: [4, 5, 6],
+          },
+        })
+        .then(results => {
+          // console.log('results :', results);
+          expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
+        });
       });
-
-      return true;
     });
   });
 });

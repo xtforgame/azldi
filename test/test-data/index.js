@@ -2,12 +2,15 @@ class MyService00 {
   static $name = 'myService00';
   static $type = 'service';
   static $inject = [];
-  static $startDeps = [];
+  static $funcDeps = {
+    start: [],
+  };
 
   constructor(){
   }
 
   start(...args) {
+    console.log('start :', this.constructor.$name);
     console.log('...args :', ...args);
     if(args[0] && args[0].getDepsInfo){
       console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
@@ -22,7 +25,7 @@ class MyService00 {
   }
 
   onStart(){
-    return this.constructor.$name;
+    return console.log('Name :', this.constructor.$name);
   }
 }
 
@@ -30,12 +33,15 @@ class MyService01 {
   static $name = 'myService01';
   static $type = 'service';
   static $inject = ['myService00'];
-  static $startDeps = ['myService00'];
+  static $funcDeps = {
+    start: ['myService02'],
+  };
 
   constructor(myService00){
   }
 
   start(...args) {
+    console.log('start :', this.constructor.$name);
     console.log('...args :', ...args);
     if(args[0] && args[0].getDepsInfo){
       console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
@@ -50,7 +56,11 @@ class MyService01 {
   }
 
   onStart(){
-    return this.constructor.$name;
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(this.constructor.$name);
+      }, 200);
+    });
   }
 }
 
@@ -58,12 +68,16 @@ class MyService02 {
   static $name = 'myService02';
   static $type = 'service';
   static $inject = ['myService00'];
-  static $startDeps = ['myService01'];
+  static $funcDeps = {
+    start: ['myService00'],
+  };
 
-  constructor(myService00){
+  constructor(myService00, ...rest){
+    console.log('myService00, ...rest :', myService00, ...rest);
   }
 
   start(...args) {
+    console.log('start :', this.constructor.$name);
     console.log('...args :', ...args);
     if(args[0] && args[0].getDepsInfo){
       console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
@@ -78,7 +92,7 @@ class MyService02 {
   }
 
   onStart(){
-    return this.constructor.$name;
+    return console.log('Name :', this.constructor.$name);
   }
 }
 

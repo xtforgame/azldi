@@ -34,14 +34,14 @@ describe('Main Test Cases', function(){
         MyService02,
       ];
 
-      let componentMetadataMap = {};
+      let metadataMap = {};
       let componentMetadataArray = [];
       Classes.forEach(Class => {
         let componentMetadata = new ComponentMetadata({
           classInfo: new ClassInfo(Class),
-          componentMetadataMap,
+          metadataMap,
         });
-        componentMetadataMap[componentMetadata.name] = componentMetadata;
+        metadataMap[componentMetadata.name] = componentMetadata;
         componentMetadataArray.push(componentMetadata);
         
         if(Class.$inject){
@@ -55,7 +55,7 @@ describe('Main Test Cases', function(){
         }
       });
 
-      // console.log('componentMetadataMap :', componentMetadataMap);
+      // console.log('metadataMap :', metadataMap);
 
       return true;
     });
