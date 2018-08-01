@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -17,7 +17,7 @@ var ClassInfo = function ClassInfo(Class) {
     if (functionName) {
       return _this.funcDeps[functionName] || [];
     }
-    return _this.Class['$inject'] || [];
+    return _this.Class.$inject || [];
   };
 
   this.getRunFunction = function (functionName) {
@@ -33,7 +33,8 @@ var ClassInfo = function ClassInfo(Class) {
         args[_key - 1] = arguments[_key];
       }
 
-      return _this.instance = _this.instance || new (Function.prototype.bind.apply(_this.Class, [null].concat(_toConsumableArray(injectedResult.getResults()), args)))();
+      _this.instance = _this.instance || new (Function.prototype.bind.apply(_this.Class, [null].concat(_toConsumableArray(injectedResult.getResults()), args)))();
+      return _this.instance;
     };
   };
 
@@ -51,7 +52,7 @@ var ClassInfo = function ClassInfo(Class) {
   this.Class = Class;
   this.name = this.Class.$name;
   this.instance = null;
-  this.funcDeps = this.Class['$funcDeps'] || {};
+  this.funcDeps = this.Class.$funcDeps || {};
 };
 
 exports.default = ClassInfo;

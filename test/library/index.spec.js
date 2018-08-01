@@ -1,4 +1,4 @@
-/*eslint-disable no-unused-vars, no-undef */
+/* eslint-disable no-unused-vars, no-undef */
 
 import chai from 'chai';
 import Azldi from '../../src/library';
@@ -9,25 +9,25 @@ import {
   MyService02,
 } from '../test-data';
 
-let expect = chai.expect;
+const { expect } = chai;
 
-describe('Main Test Cases', function(){
-  describe('Basic', function(){
+describe('Main Test Cases', () => {
+  describe('Basic', () => {
     it('azldi.register', () => {
-      let Classes = [
+      const Classes = [
         MyService00,
         MyService01,
         MyService02,
       ];
 
-      let azldi = new Azldi();
+      const azldi = new Azldi();
 
-      Classes.forEach(Class => {
+      Classes.forEach((Class) => {
         azldi.register(Class);
       });
 
-      Classes.forEach(Class => {
-        let classInfo = azldi.getClassInfo(Class.$name);
+      Classes.forEach((Class) => {
+        const classInfo = azldi.getClassInfo(Class.$name);
         expect(classInfo, 'classInfo').to.exist;
         expect(classInfo.Class, 'classInfo.Class').to.equal(Class);
       });
@@ -36,33 +36,33 @@ describe('Main Test Cases', function(){
     });
 
     it('azldi.digest', () => {
-      let Classes = [
+      const Classes = [
         MyService02,
         MyService01,
         MyService00,
       ];
 
-      let azldi = new Azldi();
+      const azldi = new Azldi();
 
       // azldi.register(Classes);
-      Classes.forEach(Class => {
+      Classes.forEach((Class) => {
         azldi.register(Class);
       });
 
-      Classes.forEach(Class => {
-        let classInfo = azldi.getClassInfo(Class.$name);
+      Classes.forEach((Class) => {
+        const classInfo = azldi.getClassInfo(Class.$name);
         expect(classInfo, 'classInfo').to.exist;
         expect(classInfo.Class, 'classInfo.Class').to.equal(Class);
       });
 
-      let digestOrder = [
+      const digestOrder = [
         MyService00,
         MyService02,
         MyService01,
       ];
       let digestIndex = 0;
 
-      let results = azldi.digest({
+      const results = azldi.digest({
         onCreate: (obj) => {
           expect(obj.result, 'obj.result').to.exist;
           expect(obj.result.constructor, 'obj.result.constructor').to.equal(digestOrder[digestIndex]);
@@ -76,21 +76,19 @@ describe('Main Test Cases', function(){
       // console.log('results :', results);
 
       return azldi.runAsync('start', [])
-      .then(results => {
-        // console.log('results :', results);
+      .then((/* r */) => {
+        // console.log('r :', r);
         expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
         return azldi.runAsync('start', [1, 2, 3], {
           appendArgs: {
             myService02: [4, 5, 6],
           },
         })
-        .then(results => {
-          // console.log('results :', results);
+        .then((/* r */) => {
+          // console.log('r :', r);
           expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
         });
       });
     });
   });
 });
-
-

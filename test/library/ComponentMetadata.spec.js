@@ -1,4 +1,4 @@
-/*eslint-disable no-unused-vars, no-undef */
+/* eslint-disable no-unused-vars, no-undef */
 
 import chai from 'chai';
 import Azldi, {
@@ -12,11 +12,10 @@ import {
   MyService02,
 } from '../test-data';
 
-let expect = chai.expect;
+const { expect } = chai;
 
-describe('Main Test Cases', function(){
-  describe('Basic', function(){
-
+describe('Main Test Cases', () => {
+  describe('Basic', () => {
     it('Azldi should be a function', () => {
       expect(Azldi).to.be.an.instanceof(Function);
       return true;
@@ -28,29 +27,29 @@ describe('Main Test Cases', function(){
     });
 
     it('ComponentMetadata Test', () => {
-      let Classes = [
+      const Classes = [
         MyService00,
         MyService01,
         MyService02,
       ];
 
-      let metadataMap = {};
-      let componentMetadataArray = [];
-      Classes.forEach(Class => {
-        let componentMetadata = new ComponentMetadata({
+      const metadataMap = {};
+      const componentMetadataArray = [];
+      Classes.forEach((Class) => {
+        const componentMetadata = new ComponentMetadata({
           classInfo: new ClassInfo(Class),
           metadataMap,
         });
         metadataMap[componentMetadata.name] = componentMetadata;
         componentMetadataArray.push(componentMetadata);
-        
-        if(Class.$inject){
-          let injects = componentMetadata.classInfo.getDependencies();
+
+        if (Class.$inject) {
+          const injects = componentMetadata.classInfo.getDependencies();
           expect(injects).to.equal(Class.$inject);
         }
 
-        if(Class.$startDep){
-          let startDeps = componentMetadata.classInfo.getDependencies('start');
+        if (Class.$startDep) {
+          const startDeps = componentMetadata.classInfo.getDependencies('start');
           expect(startDeps).to.equal(Class.$startDep);
         }
       });
@@ -61,5 +60,3 @@ describe('Main Test Cases', function(){
     });
   });
 });
-
-

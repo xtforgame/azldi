@@ -1,19 +1,19 @@
 class MyService00 {
   static $name = 'myService00';
+
   static $type = 'service';
+
   static $inject = [];
+
   static $funcDeps = {
     start: [],
   };
 
-  constructor(){
-  }
-
   start(...args) {
-    console.log('start :', this.constructor.$name);
-    console.log('...args :', ...args);
-    if(args[0] && args[0].getDepsInfo){
-      console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
+    // console.log('start :', this.constructor.$name);
+    // console.log('...args :', ...args);
+    if (args[0] && args[0].getDepsInfo) {
+      // console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
     }
     return new Promise((resolve, reject) => {
       try {
@@ -24,27 +24,27 @@ class MyService00 {
     });
   }
 
-  onStart(){
-    return console.log('Name :', this.constructor.$name);
+  onStart() {
+    // console.log('Name :', this.constructor.$name);
   }
 }
 
 class MyService01 {
   static $name = 'myService01';
+
   static $type = 'service';
+
   static $inject = ['myService00'];
+
   static $funcDeps = {
     start: ['myService02'],
   };
 
-  constructor(myService00){
-  }
-
   start(...args) {
-    console.log('start :', this.constructor.$name);
-    console.log('...args :', ...args);
-    if(args[0] && args[0].getDepsInfo){
-      console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
+    // console.log('start :', this.constructor.$name);
+    // console.log('...args :', ...args);
+    if (args[0] && args[0].getDepsInfo) {
+      // console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
     }
     return new Promise((resolve, reject) => {
       try {
@@ -55,8 +55,8 @@ class MyService01 {
     });
   }
 
-  onStart(){
-    return new Promise(resolve => {
+  onStart() {
+    return new Promise((resolve) => {
       setTimeout(() => {
         resolve(this.constructor.$name);
       }, 200);
@@ -66,21 +66,24 @@ class MyService01 {
 
 class MyService02 {
   static $name = 'myService02';
+
   static $type = 'service';
+
   static $inject = ['myService00'];
+
   static $funcDeps = {
     start: ['myService00'],
   };
 
-  constructor(myService00, ...rest){
-    console.log('myService00, ...rest :', myService00, ...rest);
-  }
+  // constructor(myService00, ...rest) {
+  //   console.log('myService00, ...rest :', myService00, ...rest);
+  // }
 
   start(...args) {
-    console.log('start :', this.constructor.$name);
-    console.log('...args :', ...args);
-    if(args[0] && args[0].getDepsInfo){
-      console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
+    // console.log('start :', this.constructor.$name);
+    // console.log('...args :', ...args);
+    if (args[0] && args[0].getDepsInfo) {
+      // console.log('args[0].getDepsInfo() :', args[0].getDepsInfo());
     }
     return new Promise((resolve, reject) => {
       try {
@@ -91,8 +94,8 @@ class MyService02 {
     });
   }
 
-  onStart(){
-    return console.log('Name :', this.constructor.$name);
+  onStart() {
+    // console.log('Name :', this.constructor.$name);
   }
 }
 

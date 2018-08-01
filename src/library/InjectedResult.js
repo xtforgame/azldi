@@ -1,11 +1,11 @@
 const privateData = new WeakMap();
 
 export default class InjectedResult {
-  constructor(metadataMap, depComponentNames){
-    let deps = {};
-    depComponentNames.map(depComponentName => {
-      let classInfo = metadataMap[depComponentName].classInfo;
-      let instance = classInfo.instance;
+  constructor(metadataMap, depComponentNames) {
+    const deps = {};
+    depComponentNames.forEach((depComponentName) => {
+      const { classInfo } = metadataMap[depComponentName];
+      const { instance } = classInfo;
       deps[depComponentName] = {
         classInfo,
         instance,
@@ -19,16 +19,16 @@ export default class InjectedResult {
     });
   }
 
-  getDepsInfo(){
-    let { deps } = privateData.get(this);
+  getDepsInfo() {
+    const { deps } = privateData.get(this);
     return deps;
   }
 
-  setResults(results){
-    let { depComponentNames, deps, ...rest } = privateData.get(this);
-    results.map((result, i) => {
-      let depComponentName = depComponentNames[i];
-      deps[depComponentName]['result'] = result;
+  setResults(results) {
+    const { depComponentNames, deps, ...rest } = privateData.get(this);
+    results.forEach((result, i) => {
+      const depComponentName = depComponentNames[i];
+      deps[depComponentName].result = result;
     });
 
     privateData.set(this, {
@@ -39,12 +39,12 @@ export default class InjectedResult {
     });
   }
 
-  getResults(){
-    let { results } = privateData.get(this);
+  getResults() {
+    const { results } = privateData.get(this);
     return results;
   }
 
-  inject(results, args){
+  inject(results, args) {
     this.setResults(results);
     return [this, ...args];
   }

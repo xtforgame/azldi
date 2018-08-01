@@ -67,7 +67,7 @@ var Azldi = function () {
 
       var metadataMap = {};
       var metadataArray = [];
-      this.classInfoArray.map(function (classInfo) {
+      this.classInfoArray.forEach(function (classInfo) {
         var componentMetadata = new _ComponentMetadata2.default({
           classInfo: classInfo,
           metadataMap: metadataMap,

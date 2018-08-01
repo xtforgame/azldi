@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -21,9 +21,10 @@ var InjectedResult = function () {
     _classCallCheck(this, InjectedResult);
 
     var deps = {};
-    depComponentNames.map(function (depComponentName) {
+    depComponentNames.forEach(function (depComponentName) {
       var classInfo = metadataMap[depComponentName].classInfo;
       var instance = classInfo.instance;
+
       deps[depComponentName] = {
         classInfo: classInfo,
         instance: instance
@@ -38,7 +39,7 @@ var InjectedResult = function () {
   }
 
   _createClass(InjectedResult, [{
-    key: 'getDepsInfo',
+    key: "getDepsInfo",
     value: function getDepsInfo() {
       var _privateData$get = privateData.get(this),
           deps = _privateData$get.deps;
@@ -46,16 +47,16 @@ var InjectedResult = function () {
       return deps;
     }
   }, {
-    key: 'setResults',
+    key: "setResults",
     value: function setResults(results) {
       var _privateData$get2 = privateData.get(this),
           depComponentNames = _privateData$get2.depComponentNames,
           deps = _privateData$get2.deps,
-          rest = _objectWithoutProperties(_privateData$get2, ['depComponentNames', 'deps']);
+          rest = _objectWithoutProperties(_privateData$get2, ["depComponentNames", "deps"]);
 
-      results.map(function (result, i) {
+      results.forEach(function (result, i) {
         var depComponentName = depComponentNames[i];
-        deps[depComponentName]['result'] = result;
+        deps[depComponentName].result = result;
       });
 
       privateData.set(this, _extends({
@@ -66,7 +67,7 @@ var InjectedResult = function () {
       }));
     }
   }, {
-    key: 'getResults',
+    key: "getResults",
     value: function getResults() {
       var _privateData$get3 = privateData.get(this),
           results = _privateData$get3.results;
@@ -74,7 +75,7 @@ var InjectedResult = function () {
       return results;
     }
   }, {
-    key: 'inject',
+    key: "inject",
     value: function inject(results, args) {
       this.setResults(results);
       return [this].concat(_toConsumableArray(args));

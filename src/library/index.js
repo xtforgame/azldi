@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import ClassInfo from './ClassInfo';
 import ComponentMetadata from './ComponentMetadata';
 
@@ -7,37 +8,35 @@ export {
 };
 
 export default class Azldi {
-  constructor(){
+  constructor() {
     this.classInfoMap = {};
     this.classInfoArray = [];
   }
 
   get = (name) => {
-    let classInfo = this.classInfoMap[name];
+    const classInfo = this.classInfoMap[name];
     return classInfo && classInfo.instance;
   };
 
-  getClassInfo = (name) => {
-    return this.classInfoMap[name];
-  };
+  getClassInfo = name => this.classInfoMap[name];
 
-  register(Classes){
-    if(Array.isArray(Classes)){
-      return Classes.map(Class => this.register(Class))
+  register(Classes) {
+    if (Array.isArray(Classes)) {
+      return Classes.map(Class => this.register(Class));
     }
 
-    let classInfo = new ClassInfo(Classes);
+    const classInfo = new ClassInfo(Classes);
     this.classInfoMap[classInfo.name] = classInfo;
     this.classInfoArray.push(classInfo);
 
     return true;
   }
 
-  _run(functionName, args, appendArgs, callback, runSync = true){
-    let metadataMap = {};
-    let metadataArray = [];
-    this.classInfoArray.map(classInfo => {
-      let componentMetadata = new ComponentMetadata({
+  _run(functionName, args, appendArgs, callback, runSync = true) {
+    const metadataMap = {};
+    const metadataArray = [];
+    this.classInfoArray.forEach((classInfo) => {
+      const componentMetadata = new ComponentMetadata({
         classInfo,
         metadataMap,
         functionName,
@@ -47,8 +46,8 @@ export default class Azldi {
       metadataArray.push(componentMetadata);
     });
 
-    let results = metadataArray.map(componentMetadata => {
-      let result = componentMetadata.getProcessFunc({
+    const results = metadataArray.map((componentMetadata) => {
+      const result = componentMetadata.getProcessFunc({
         callback,
         runSync,
       })(...args);
@@ -58,15 +57,15 @@ export default class Azldi {
     return runSync ? results : Promise.all(results);
   }
 
-  digest({ onCreate = (() => {}), appendArgs = {} } = {}){
+  digest({ onCreate = (() => {}), appendArgs = {} } = {}) {
     return this._run(undefined, [], appendArgs, onCreate, true);
   }
 
-  run(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}){
+  run(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) {
     return this._run(functionName, args, appendArgs, onResult, true);
   }
 
-  runAsync(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}){
+  runAsync(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) {
     return this._run(functionName, args, appendArgs, onResult, false);
   }
 }

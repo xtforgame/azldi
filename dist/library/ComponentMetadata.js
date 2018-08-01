@@ -9,10 +9,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _class, _temp, _initialiseProps;
 
-var _ClassInfo = require('./ClassInfo');
-
-var _ClassInfo2 = _interopRequireDefault(_ClassInfo);
-
 var _InjectedResult = require('./InjectedResult');
 
 var _InjectedResult2 = _interopRequireDefault(_InjectedResult);
