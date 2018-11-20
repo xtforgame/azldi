@@ -55,8 +55,10 @@ var InjectedResult = function () {
           rest = _objectWithoutProperties(_privateData$get2, ["depComponentNames", "deps"]);
 
       results.forEach(function (result, i) {
-        var depComponentName = depComponentNames[i];
-        deps[depComponentName].result = result;
+        if (i < depComponentNames.length) {
+          var depComponentName = depComponentNames[i];
+          deps[depComponentName].result = result;
+        }
       });
 
       privateData.set(this, _extends({

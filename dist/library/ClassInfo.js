@@ -13,6 +13,10 @@ var ClassInfo = function ClassInfo(Class) {
 
   _classCallCheck(this, ClassInfo);
 
+  this.getRunBeforeList = function (functionName) {
+    return _this.runBefore[functionName] || [];
+  };
+
   this.getDependencies = function (functionName) {
     if (functionName) {
       return _this.funcDeps[functionName] || [];
@@ -53,6 +57,7 @@ var ClassInfo = function ClassInfo(Class) {
   this.name = this.Class.$name;
   this.instance = null;
   this.funcDeps = this.Class.$funcDeps || {};
+  this.runBefore = this.Class.$runBefore || {};
 };
 
 exports.default = ClassInfo;

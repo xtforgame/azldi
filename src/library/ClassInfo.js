@@ -4,7 +4,10 @@ export default class ClassInfo {
     this.name = this.Class.$name;
     this.instance = null;
     this.funcDeps = this.Class.$funcDeps || {};
+    this.runBefore = this.Class.$runBefore || {};
   }
+
+  getRunBeforeList = functionName => this.runBefore[functionName] || [];
 
   getDependencies = (functionName) => {
     if (functionName) {

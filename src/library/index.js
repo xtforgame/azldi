@@ -34,11 +34,16 @@ export default class Azldi {
 
   _run(functionName, args, appendArgs, callback, runSync = true) {
     const metadataMap = {};
+    const runBeforeMap = {};
     const metadataArray = [];
     this.classInfoArray.forEach((classInfo) => {
+      classInfo.getRunBeforeList(functionName).forEach(
+        dep => (runBeforeMap[dep] = [...(runBeforeMap[dep]) || [], classInfo.name])
+      );
       const componentMetadata = new ComponentMetadata({
         classInfo,
         metadataMap,
+        runBeforeMap,
         functionName,
         appendArgs: appendArgs[classInfo.name],
       });

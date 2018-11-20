@@ -99,8 +99,41 @@ class MyService02 {
   }
 }
 
+class MyService03 {
+  static $name = 'myService03';
+
+  static $type = 'service';
+
+  static $inject = ['myService00'];
+
+  static $runBefore = {
+    start: ['myService00'],
+  };
+
+  // constructor(myService00, ...rest) {
+  //   console.log('myService00, ...rest :', myService00, ...rest);
+  // }
+
+  start(...args) {
+    // console.log('start :', this.constructor.$name);
+    // console.log('...args :', ...args);
+    return new Promise((resolve, reject) => {
+      try {
+        return resolve(this.onStart && this.onStart(...args));
+      } catch (e) {
+        return reject(e);
+      }
+    });
+  }
+
+  onStart() {
+    // console.log('Name :', this.constructor.$name);
+  }
+}
+
 export {
   MyService00,
   MyService01,
   MyService02,
+  MyService03,
 };

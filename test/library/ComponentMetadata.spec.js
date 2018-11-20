@@ -10,6 +10,7 @@ import {
   MyService00,
   MyService01,
   MyService02,
+  MyService03,
 } from '../test-data';
 
 const { expect } = chai;
@@ -31,14 +32,21 @@ describe('Main Test Cases', () => {
         MyService00,
         MyService01,
         MyService02,
+        MyService03,
       ];
 
       const metadataMap = {};
+      const runBeforeMap = {};
       const componentMetadataArray = [];
       Classes.forEach((Class) => {
+        const classInfo = new ClassInfo(Class);
+        classInfo.getRunBeforeList().forEach(
+          dep => (runBeforeMap[dep] = [...(runBeforeMap[dep]) || [], classInfo.name])
+        );
         const componentMetadata = new ComponentMetadata({
-          classInfo: new ClassInfo(Class),
+          classInfo,
           metadataMap,
+          runBeforeMap,
         });
         metadataMap[componentMetadata.name] = componentMetadata;
         componentMetadataArray.push(componentMetadata);

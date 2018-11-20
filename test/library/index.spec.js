@@ -7,6 +7,7 @@ import {
   MyService00,
   MyService01,
   MyService02,
+  MyService03,
 } from '../test-data';
 
 const { expect } = chai;
@@ -18,6 +19,7 @@ describe('Main Test Cases', () => {
         MyService00,
         MyService01,
         MyService02,
+        MyService03,
       ];
 
       const azldi = new Azldi();
@@ -37,6 +39,7 @@ describe('Main Test Cases', () => {
 
     it('azldi.digest', () => {
       const Classes = [
+        MyService03,
         MyService02,
         MyService01,
         MyService00,
@@ -57,6 +60,7 @@ describe('Main Test Cases', () => {
 
       const digestOrder = [
         MyService00,
+        MyService03,
         MyService02,
         MyService01,
       ];

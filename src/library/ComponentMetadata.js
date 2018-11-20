@@ -5,11 +5,13 @@ export default class ComponentMetadata {
   constructor({
     classInfo,
     metadataMap,
+    runBeforeMap,
     functionName,
     appendArgs = [],
   }) {
     this.classInfo = classInfo;
     this.metadataMap = metadataMap;
+    this.runBeforeList = runBeforeMap[this.name] || [];
     this.functionName = this.classInfo.instance && functionName;
     this.appendArgs = appendArgs;
 
@@ -44,7 +46,7 @@ export default class ComponentMetadata {
     this.depResolving = true;
 
     this.depComponentNames = this.classInfo.getDependencies(this.functionName);
-    this.depRunFuncs = this.depComponentNames.map((dep) => {
+    this.depRunFuncs = [...this.depComponentNames, ...this.runBeforeList].map((dep) => {
       const depComponentMetadata = this.metadataMap[dep];
       if (!depComponentMetadata) {
         throw new Error(`Component not Found :${dep}`);

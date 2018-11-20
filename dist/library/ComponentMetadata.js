@@ -23,6 +23,7 @@ var ComponentMetadata = (_temp = _class = function () {
   function ComponentMetadata(_ref) {
     var classInfo = _ref.classInfo,
         metadataMap = _ref.metadataMap,
+        runBeforeMap = _ref.runBeforeMap,
         functionName = _ref.functionName,
         _ref$appendArgs = _ref.appendArgs,
         appendArgs = _ref$appendArgs === undefined ? [] : _ref$appendArgs;
@@ -33,6 +34,7 @@ var ComponentMetadata = (_temp = _class = function () {
 
     this.classInfo = classInfo;
     this.metadataMap = metadataMap;
+    this.runBeforeList = runBeforeMap[this.name] || [];
     this.functionName = this.classInfo.instance && functionName;
     this.appendArgs = appendArgs;
 
@@ -59,7 +61,7 @@ var ComponentMetadata = (_temp = _class = function () {
       this.depResolving = true;
 
       this.depComponentNames = this.classInfo.getDependencies(this.functionName);
-      this.depRunFuncs = this.depComponentNames.map(function (dep) {
+      this.depRunFuncs = [].concat(_toConsumableArray(this.depComponentNames), _toConsumableArray(this.runBeforeList)).map(function (dep) {
         var depComponentMetadata = _this.metadataMap[dep];
         if (!depComponentMetadata) {
           throw new Error('Component not Found :' + dep);

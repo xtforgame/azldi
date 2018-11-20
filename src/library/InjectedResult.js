@@ -27,8 +27,10 @@ export default class InjectedResult {
   setResults(results) {
     const { depComponentNames, deps, ...rest } = privateData.get(this);
     results.forEach((result, i) => {
-      const depComponentName = depComponentNames[i];
-      deps[depComponentName].result = result;
+      if (i < depComponentNames.length) {
+        const depComponentName = depComponentNames[i];
+        deps[depComponentName].result = result;
+      }
     });
 
     privateData.set(this, {

@@ -66,11 +66,16 @@ var Azldi = function () {
       var runSync = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
 
       var metadataMap = {};
+      var runBeforeMap = {};
       var metadataArray = [];
       this.classInfoArray.forEach(function (classInfo) {
+        classInfo.getRunBeforeList(functionName).forEach(function (dep) {
+          return runBeforeMap[dep] = [].concat(_toConsumableArray(runBeforeMap[dep] || []), [classInfo.name]);
+        });
         var componentMetadata = new _ComponentMetadata2.default({
           classInfo: classInfo,
           metadataMap: metadataMap,
+          runBeforeMap: runBeforeMap,
           functionName: functionName,
           appendArgs: appendArgs[classInfo.name]
         });
