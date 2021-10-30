@@ -49,10 +49,9 @@ var Azldi = function () {
 
     _classCallCheck(this, Azldi);
 
-    _defineProperty(this, "get", function (name) {
-      var classInfo = _this.classInfoMap[name];
-      return classInfo && classInfo.instance;
-    });
+    _defineProperty(this, "classInfoMap", void 0);
+
+    _defineProperty(this, "classInfoArray", void 0);
 
     _defineProperty(this, "getClassInfo", function (name) {
       return _this.classInfoMap[name];
@@ -63,6 +62,12 @@ var Azldi = function () {
   }
 
   _createClass(Azldi, [{
+    key: "get",
+    value: function get(name) {
+      var classInfo = this.classInfoMap[name];
+      return classInfo && classInfo.instance;
+    }
+  }, {
     key: "register",
     value: function register(Classes) {
       var _this2 = this;

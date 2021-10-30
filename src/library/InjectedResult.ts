@@ -1,6 +1,15 @@
+import ClassInfo from './ClassInfo';
+
 const privateData = new WeakMap();
 
-export default class InjectedResult {
+export default class InjectedResult<ClassBase> {
+  privateData2: {
+    depComponentNames: {
+      classInfo: ClassInfo<ClassBase>;
+      instance: ClassBase;
+    }
+  }
+
   constructor(metadataMap, depComponentNames) {
     const deps = {};
     depComponentNames.forEach((depComponentName) => {
@@ -11,6 +20,10 @@ export default class InjectedResult {
         instance,
       };
     });
+
+    this.privateData2 = {
+      depComponentNames,
+    };
 
     privateData.set(this, {
       metadataMap,

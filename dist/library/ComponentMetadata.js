@@ -42,6 +42,28 @@ var ComponentMetadata = function () {
 
     _classCallCheck(this, ComponentMetadata);
 
+    _defineProperty(this, "classInfo", void 0);
+
+    _defineProperty(this, "metadataMap", void 0);
+
+    _defineProperty(this, "runBeforeList", void 0);
+
+    _defineProperty(this, "functionName", void 0);
+
+    _defineProperty(this, "appendArgs", void 0);
+
+    _defineProperty(this, "depComponentNames", void 0);
+
+    _defineProperty(this, "depRunFuncs", void 0);
+
+    _defineProperty(this, "depResolving", void 0);
+
+    _defineProperty(this, "processFunc", void 0);
+
+    _defineProperty(this, "isDone", void 0);
+
+    _defineProperty(this, "result", void 0);
+
     _defineProperty(this, "run", function (functionName, args, callback) {
       if (_this.isDone) {
         return _this.result;
@@ -99,7 +121,12 @@ var ComponentMetadata = function () {
     this.runBeforeList = runBeforeMap[this.name] || [];
     this.functionName = this.classInfo.instance && _functionName;
     this.appendArgs = appendArgs;
-    this.resetState();
+    this.depComponentNames = [];
+    this.depRunFuncs = [];
+    this.depResolving = false;
+    this.processFunc = null;
+    this.isDone = false;
+    this.result = null;
   }
 
   _createClass(ComponentMetadata, [{

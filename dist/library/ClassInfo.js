@@ -32,6 +32,16 @@ var ClassInfo = function ClassInfo(Class) {
 
   _classCallCheck(this, ClassInfo);
 
+  _defineProperty(this, "Class", void 0);
+
+  _defineProperty(this, "name", void 0);
+
+  _defineProperty(this, "instance", void 0);
+
+  _defineProperty(this, "funcDeps", void 0);
+
+  _defineProperty(this, "runBefore", void 0);
+
   _defineProperty(this, "getRunBeforeList", function (functionName) {
     return _this.runBefore[functionName] || [];
   });
@@ -47,18 +57,21 @@ var ClassInfo = function ClassInfo(Class) {
   _defineProperty(this, "getRunFunction", function (functionName) {
     if (_this.instance && functionName) {
       return function () {
-        var _this$instance;
+        var _ref;
 
-        return (_this$instance = _this.instance)[functionName].apply(_this$instance, arguments);
+        return (_ref = _this.instance)[functionName].apply(_ref, arguments);
       };
     }
 
     return function (injectedResult) {
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
+      if (!_this.instance) {
+        for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+          args[_key - 1] = arguments[_key];
+        }
+
+        _this.instance = _construct(_this.Class, _toConsumableArray(injectedResult.getResults()).concat(args));
       }
 
-      _this.instance = _this.instance || _construct(_this.Class, _toConsumableArray(injectedResult.getResults()).concat(args));
       return _this.instance;
     };
   });
@@ -77,7 +90,7 @@ var ClassInfo = function ClassInfo(Class) {
 
   this.Class = Class;
   this.name = this.Class.$name;
-  this.instance = null;
+  this.instance = undefined;
   this.funcDeps = this.Class.$funcDeps || {};
   this.runBefore = this.Class.$runBefore || {};
 };

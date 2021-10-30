@@ -6,16 +6,19 @@ export {
   ClassInfo,
   ComponentMetadata,
 };
+export default class Azldi<ClassBase> {
+  classInfoMap: { [s: string]: ClassInfo<ClassBase> };
 
-export default class Azldi {
+  classInfoArray: ClassInfo<ClassBase>[];
+
   constructor() {
     this.classInfoMap = {};
     this.classInfoArray = [];
   }
 
-  get = (name) => {
+  get<T>(name) : T | undefined {
     const classInfo = this.classInfoMap[name];
-    return classInfo && classInfo.instance;
+    return classInfo && (<T><any>classInfo.instance);
   };
 
   getClassInfo = name => this.classInfoMap[name];
@@ -25,7 +28,7 @@ export default class Azldi {
       return Classes.map(Class => this.register(Class));
     }
 
-    const classInfo = new ClassInfo(Classes);
+    const classInfo = new ClassInfo<ClassBase>(Classes);
     this.classInfoMap[classInfo.name] = classInfo;
     this.classInfoArray.push(classInfo);
 
@@ -35,12 +38,12 @@ export default class Azldi {
   _run(functionName, args, appendArgs, callback, runSync = true) {
     const metadataMap = {};
     const runBeforeMap = {};
-    const metadataArray = [];
+    const metadataArray : ComponentMetadata<ClassBase>[] = [];
     this.classInfoArray.forEach((classInfo) => {
       classInfo.getRunBeforeList(functionName).forEach(
         dep => (runBeforeMap[dep] = [...(runBeforeMap[dep]) || [], classInfo.name])
       );
-      const componentMetadata = new ComponentMetadata({
+      const componentMetadata = new ComponentMetadata<ClassBase>({
         classInfo,
         metadataMap,
         runBeforeMap,
@@ -66,11 +69,11 @@ export default class Azldi {
     return this._run(undefined, [], appendArgs, onCreate, true);
   }
 
-  run(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) {
-    return this._run(functionName, args, appendArgs, onResult, true);
+  run<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}): T[] {
+    return <any>this._run(functionName, args, appendArgs, onResult, true);
   }
 
-  runAsync(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) {
-    return this._run(functionName, args, appendArgs, onResult, false);
+  runAsync<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) : Promise<T>[] {
+    return <any>this._run(functionName, args, appendArgs, onResult, false);
   }
 }

@@ -1,7 +1,31 @@
 /* eslint-disable no-underscore-dangle */
 import InjectedResult from './InjectedResult';
+import { ClassType, DepsMap, Injects } from './interfaces';
+import ClassInfo from './ClassInfo';
 
-export default class ComponentMetadata {
+export default class ComponentMetadata<ClassBase> {
+  classInfo: ClassInfo<ClassBase>;
+
+  metadataMap: { [s: string]: ComponentMetadata<ClassBase> } ;
+
+  runBeforeList: Injects;
+
+  functionName: string | undefined;
+
+  appendArgs: any[];
+
+  depComponentNames: string[];
+
+  depRunFuncs: Function[];
+
+  depResolving: boolean;
+
+  processFunc: Function | null;
+
+  isDone: boolean;
+
+  result: any;
+
   constructor({
     classInfo,
     metadataMap,
@@ -15,7 +39,13 @@ export default class ComponentMetadata {
     this.functionName = this.classInfo.instance && functionName;
     this.appendArgs = appendArgs;
 
-    this.resetState();
+    this.depComponentNames = [];
+    this.depRunFuncs = [];
+
+    this.depResolving = false;
+    this.processFunc = null;
+    this.isDone = false;
+    this.result = null;
   }
 
   resetState() {
@@ -29,13 +59,13 @@ export default class ComponentMetadata {
     return this.classInfo.name;
   }
 
-  run = (functionName, args, callback) => {
+  run = <T>(functionName, args, callback) => {
     if (this.isDone) {
       return this.result;
     }
     this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback);
     this.isDone = true;
-    return this.result;
+    return this.result as T;
   };
 
   _resolve(options) {
@@ -57,7 +87,7 @@ export default class ComponentMetadata {
     this.depResolving = false;
   }
 
-  getProcessFunc = (options = {}) => {
+  getProcessFunc = (options: any = {}) => {
     if (this.processFunc) {
       return this.processFunc;
     }
@@ -67,7 +97,7 @@ export default class ComponentMetadata {
 
     this._resolve(options);
 
-    const injectedResult = new InjectedResult(this.metadataMap, this.depComponentNames);
+    const injectedResult = new InjectedResult<ClassBase>(this.metadataMap, this.depComponentNames);
     if (runSync) {
       this.processFunc = (...args) => this.run(
         this.functionName,
