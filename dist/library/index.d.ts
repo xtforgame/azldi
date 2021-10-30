@@ -22,5 +22,5 @@ export default class Azldi<ClassBase> {
     runAsync<T>(functionName: any, args?: never[], { onResult, appendArgs }?: {
         onResult?: (() => void) | undefined;
         appendArgs?: {} | undefined;
-    }): Promise<T>[];
+    }): Promise<T[]>;
 }

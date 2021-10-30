@@ -73,7 +73,7 @@ export default class Azldi<ClassBase> {
     return <any>this._run(functionName, args, appendArgs, onResult, true);
   }
 
-  runAsync<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) : Promise<T>[] {
+  runAsync<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) : Promise<T[]> {
     return <any>this._run(functionName, args, appendArgs, onResult, false);
   }
 }
