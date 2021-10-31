@@ -1,16 +1,22 @@
 /* eslint-disable no-unused-vars, no-undef */
 
 import chai from 'chai';
-import Azldi from '../../src/library';
+import Azldi, { ClassInfoRunCallbackArg } from '../../src/library';
 
 import {
+  MyServiceBase,
   MyService00,
   MyService01,
   MyService02,
   MyService03,
 } from '../test-data';
 
-const { expect } = chai;
+declare const describe;
+declare const beforeEach;
+declare const afterEach;
+declare const it;
+
+const { expect } = <any>chai;
 
 describe('Main Test Cases', () => {
   describe('Basic', () => {
@@ -22,7 +28,7 @@ describe('Main Test Cases', () => {
         MyService03,
       ];
 
-      const azldi = new Azldi();
+      const azldi = new Azldi<MyServiceBase>();
 
       Classes.forEach((Class) => {
         azldi.register(Class);
@@ -37,7 +43,7 @@ describe('Main Test Cases', () => {
       return true;
     });
 
-    it('azldi.digest', () => {
+    it('azldi.digest', async () => {
       const Classes = [
         MyService03,
         MyService02,
@@ -45,7 +51,7 @@ describe('Main Test Cases', () => {
         MyService00,
       ];
 
-      const azldi = new Azldi();
+      const azldi = new Azldi<MyServiceBase>();
 
       // azldi.register(Classes);
       Classes.forEach((Class) => {
@@ -76,22 +82,31 @@ describe('Main Test Cases', () => {
           myService02: [4, 5, 6],
         },
       });
-
+      expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
+        
       // console.log('results :', results);
 
-      return azldi.runAsync('start', [])
-      .then((/* r */) => {
-        // console.log('r :', r);
-        expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
-        return azldi.runAsync('start', [1, 2, 3], {
-          appendArgs: {
-            myService02: [4, 5, 6],
-          },
-        })
-        .then((/* r */) => {
-          // console.log('r :', r);
-          expect(digestIndex, 'digestIndex').to.equal(digestOrder.length);
-        });
+      let resultInfo = azldi.getEmptyRunResultsInfo<string>();
+      const getNameAsyncResult = await azldi.runAsync<string>('getNameAsync', [], {
+        onResultsInfoByDeps: (args) => {
+          resultInfo = args;
+        },
+        sortResultsByDeps: true,
+      });
+      // console.log('getNameAsyncResult :', getNameAsyncResult);
+      // console.log('resultInfo :', resultInfo);
+
+      await azldi.runAsync('start', []);
+      await azldi.runAsync('start', [1, 2, 3], {
+        appendArgs: {
+          myService02: [4, 5, 6],
+        },
+      });
+
+      await azldi.runAsync('start', [1, 2, 3], {
+        appendArgs: {
+          myService02: [4, 5, 6],
+        },
       });
     });
   });

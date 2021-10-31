@@ -1,5 +1,15 @@
 import { ClassType, DepsMap } from './interfaces';
 
+export type ClassInfoFunctionName<ClassBase> = (keyof ClassBase) | undefined;
+export type ClassInfoRunArgs = any[];
+
+export type ClassInfoRunCallbackArg<ClassBase, Result> = {
+  args: any[];
+  result: Result;
+  classInfo: ClassInfo<ClassBase>;
+};
+export type ClassInfoRunCallback<ClassBase, Result> = (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => void;
+
 export default class ClassInfo<ClassBase> {
   Class: ClassType<ClassBase>;
 
@@ -19,16 +29,16 @@ export default class ClassInfo<ClassBase> {
     this.runBefore = this.Class.$runBefore || {};
   }
 
-  getRunBeforeList = functionName => this.runBefore[functionName] || [];
+  getRunBeforeList = (functionName: ClassInfoFunctionName<ClassBase>) => this.runBefore[<any>functionName] || [];
 
-  getDependencies = (functionName) => {
+  getDependencies = (functionName: ClassInfoFunctionName<ClassBase>) => {
     if (functionName) {
-      return this.funcDeps[functionName] || [];
+      return this.funcDeps[<any>functionName] || [];
     }
     return this.Class.$inject || [];
   }
 
-  getRunFunction = <F = any>(functionName) => {
+  getRunFunction = <F = any>(functionName: ClassInfoFunctionName<ClassBase>) => {
     if (this.instance && functionName) {
       return <F>(...args) => (<any>this.instance!)[functionName](...args);
     }
@@ -42,7 +52,7 @@ export default class ClassInfo<ClassBase> {
     );
   }
 
-  run = <T = any>(functionName, args, callback) => {
+  run = <T = any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => {
     const func = this.getRunFunction(functionName);
     const result = (<any>func)(...args);
     callback({

@@ -1,18 +1,27 @@
 /* eslint-disable no-underscore-dangle */
 import InjectedResult from './InjectedResult';
 import { ClassType, DepsMap, Injects } from './interfaces';
-import ClassInfo from './ClassInfo';
+import ClassInfo, {
+  ClassInfoFunctionName,
+  ClassInfoRunArgs,
+  ClassInfoRunCallback,
+} from './ClassInfo';
+
+export type ComponentMetadataRunOptions<ClassBase, Result> = {
+  callback?: ClassInfoRunCallback<ClassBase, Result>;
+  runSync?: boolean;
+};
 
 export default class ComponentMetadata<ClassBase> {
   classInfo: ClassInfo<ClassBase>;
 
-  metadataMap: { [s: string]: ComponentMetadata<ClassBase> } ;
+  metadataMap: { [s: string]: ComponentMetadata<ClassBase> };
 
   runBeforeList: Injects;
 
-  functionName: string | undefined;
+  functionName: ClassInfoFunctionName<ClassBase>;
 
-  appendArgs: any[];
+  appendArgs: ClassInfoRunArgs;
 
   depComponentNames: string[];
 
@@ -32,6 +41,12 @@ export default class ComponentMetadata<ClassBase> {
     runBeforeMap,
     functionName,
     appendArgs = [],
+  }: {
+    classInfo: ClassInfo<ClassBase>;
+    metadataMap: { [s: string]: ComponentMetadata<ClassBase> };
+    runBeforeMap: { [s: string]: Injects };
+    functionName: ClassInfoFunctionName<ClassBase>;
+    appendArgs: ClassInfoRunArgs;
   }) {
     this.classInfo = classInfo;
     this.metadataMap = metadataMap;
@@ -59,7 +74,7 @@ export default class ComponentMetadata<ClassBase> {
     return this.classInfo.name;
   }
 
-  run = <T>(functionName, args, callback) => {
+  run = <T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => {
     if (this.isDone) {
       return this.result;
     }
@@ -68,7 +83,7 @@ export default class ComponentMetadata<ClassBase> {
     return this.result as T;
   };
 
-  _resolve(options) {
+  _resolve<T>(options: ComponentMetadataRunOptions<ClassBase, T>) {
     if (this.depResolving) {
       throw new Error(`Circular dependencies occured :${this.name}`);
     }
@@ -87,12 +102,12 @@ export default class ComponentMetadata<ClassBase> {
     this.depResolving = false;
   }
 
-  getProcessFunc = (options: any = {}) => {
+  getProcessFunc = <T>(options: ComponentMetadataRunOptions<ClassBase, T> = {}) => {
     if (this.processFunc) {
       return this.processFunc;
     }
 
-    const callback = options.callback || (() => {});
+    const callback : ClassInfoRunCallback<ClassBase, any> = options.callback || (() => {});
     const runSync = (options.runSync !== null) ? options.runSync : true;
 
     this._resolve(options);

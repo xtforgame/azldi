@@ -1,11 +1,41 @@
 /* eslint-disable no-underscore-dangle */
-import ClassInfo from './ClassInfo';
-import ComponentMetadata from './ComponentMetadata';
+import ClassInfo, {
+  ClassInfoFunctionName,
+  ClassInfoRunArgs,
+  ClassInfoRunCallbackArg,
+  ClassInfoRunCallback,
+} from './ClassInfo';
+import ComponentMetadata, { ComponentMetadataRunOptions } from './ComponentMetadata';
+import InjectedResult from './InjectedResult';
+
+export * from './InjectedResult';
+export * from './ClassInfo';
+export * from './ComponentMetadata';
 
 export {
   ClassInfo,
+  InjectedResult,
   ComponentMetadata,
 };
+
+export type AppendArgsMap = {
+  [s: string]: ClassInfoRunArgs;
+}
+
+export type CreateOptions<ClassBase, Result> = {
+  onCreate?: ClassInfoRunCallback<ClassBase, Result>;
+  appendArgs?: AppendArgsMap;
+  onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
+  sortResultsByDeps?: boolean;
+};
+
+export type RunOptions<ClassBase, Result> = {
+  onResult?: ClassInfoRunCallback<ClassBase, Result>;
+  appendArgs?: AppendArgsMap;
+  onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
+  sortResultsByDeps?: boolean;
+};
+
 export default class Azldi<ClassBase> {
   classInfoMap: { [s: string]: ClassInfo<ClassBase> };
 
@@ -16,7 +46,7 @@ export default class Azldi<ClassBase> {
     this.classInfoArray = [];
   }
 
-  get<T>(name) : T | undefined {
+  get<T=any>(name) : T | undefined {
     const classInfo = this.classInfoMap[name];
     return classInfo && (<T><any>classInfo.instance);
   };
@@ -35,7 +65,7 @@ export default class Azldi<ClassBase> {
     return true;
   }
 
-  _run(functionName, args, appendArgs, callback, runSync = true) {
+  _run<T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, appendArgs: AppendArgsMap, callback, runSync = true) {
     const metadataMap = {};
     const runBeforeMap = {};
     const metadataArray : ComponentMetadata<ClassBase>[] = [];
@@ -55,7 +85,7 @@ export default class Azldi<ClassBase> {
     });
 
     const results = metadataArray.map((componentMetadata) => {
-      const result = componentMetadata.getProcessFunc({
+      const result = componentMetadata.getProcessFunc<T>({
         callback,
         runSync,
       })(...args);
@@ -65,15 +95,82 @@ export default class Azldi<ClassBase> {
     return runSync ? results : Promise.all(results);
   }
 
-  digest({ onCreate = (() => {}), appendArgs = {} } = {}) {
-    return this._run(undefined, [], appendArgs, onCreate, true);
+  digest({
+    onCreate = (() => {}),
+    appendArgs = {},
+    onResultsInfoByDeps,
+    sortResultsByDeps,
+  } : CreateOptions<ClassBase, ClassBase> = {}) {
+    let cb = onCreate;
+    const resultsInfo: ClassInfoRunCallbackArg<ClassBase, ClassBase>[] = [];
+    if (onResultsInfoByDeps || sortResultsByDeps) {
+      cb = (args) => {
+        resultsInfo.push(args);
+        onCreate(args);
+      }
+    }
+    const results = this._run(undefined, [], appendArgs, cb, true);
+    if (onResultsInfoByDeps) {
+      onResultsInfoByDeps(resultsInfo);
+    }
+    if (sortResultsByDeps) {
+      return resultsInfo.map(ri => ri.result);
+    }
+    return results;
   }
 
-  run<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}): T[] {
-    return <any>this._run(functionName, args, appendArgs, onResult, true);
+  getEmptyRunResultsInfo<T=any>() {
+    return [] as ClassInfoRunCallbackArg<ClassBase, T>[];
   }
 
-  runAsync<T>(functionName, args = [], { onResult = (() => {}), appendArgs = {} } = {}) : Promise<T[]> {
-    return <any>this._run(functionName, args, appendArgs, onResult, false);
+  run<T=any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs = [], {
+    onResult = (() => {}),
+    appendArgs = {},
+    onResultsInfoByDeps,
+    sortResultsByDeps,
+  }: RunOptions<ClassBase, T> = {}): T[] {
+    let cb = onResult;
+    const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
+    if (onResultsInfoByDeps || sortResultsByDeps) {
+      cb = (args) => {
+        resultsInfo.push(args);
+        onResult(args);
+      }
+    }
+    const result = <any>this._run(functionName, args, appendArgs, cb, true);
+    if (onResultsInfoByDeps) {
+      onResultsInfoByDeps(resultsInfo);
+    }
+    if (sortResultsByDeps) {
+      return resultsInfo.map(ri => ri.result);
+    }
+    return result;
+  }
+
+  runAsync<T=any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs = [], {
+    onResult = (() => {}),
+    appendArgs = {},
+    onResultsInfoByDeps,
+    sortResultsByDeps,
+  }: RunOptions<ClassBase, T> = {}) : Promise<T[]> {
+    let cb = onResult;
+    const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
+    if (onResultsInfoByDeps || sortResultsByDeps) {
+      cb = (args) => {
+        resultsInfo.push(args);
+        onResult(args);
+      }
+    }
+    return (this._run(functionName, args, appendArgs, cb, false) as Promise<any[]>)
+    .then((result) => {
+      if (onResultsInfoByDeps) {
+        onResultsInfoByDeps(resultsInfo);
+      }
+      if (sortResultsByDeps) {
+        return resultsInfo.map(ri => ri.result);
+      }
+      return <any>result;
+    });
+
   }
 }

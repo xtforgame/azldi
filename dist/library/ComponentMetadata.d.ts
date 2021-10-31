@@ -1,13 +1,17 @@
 import { Injects } from './interfaces';
-import ClassInfo from './ClassInfo';
+import ClassInfo, { ClassInfoFunctionName, ClassInfoRunArgs, ClassInfoRunCallback } from './ClassInfo';
+export declare type ComponentMetadataRunOptions<ClassBase, Result> = {
+    callback?: ClassInfoRunCallback<ClassBase, Result>;
+    runSync?: boolean;
+};
 export default class ComponentMetadata<ClassBase> {
     classInfo: ClassInfo<ClassBase>;
     metadataMap: {
         [s: string]: ComponentMetadata<ClassBase>;
     };
     runBeforeList: Injects;
-    functionName: string | undefined;
-    appendArgs: any[];
+    functionName: ClassInfoFunctionName<ClassBase>;
+    appendArgs: ClassInfoRunArgs;
     depComponentNames: string[];
     depRunFuncs: Function[];
     depResolving: boolean;
@@ -15,15 +19,19 @@ export default class ComponentMetadata<ClassBase> {
     isDone: boolean;
     result: any;
     constructor({ classInfo, metadataMap, runBeforeMap, functionName, appendArgs, }: {
-        classInfo: any;
-        metadataMap: any;
-        runBeforeMap: any;
-        functionName: any;
-        appendArgs?: never[] | undefined;
+        classInfo: ClassInfo<ClassBase>;
+        metadataMap: {
+            [s: string]: ComponentMetadata<ClassBase>;
+        };
+        runBeforeMap: {
+            [s: string]: Injects;
+        };
+        functionName: ClassInfoFunctionName<ClassBase>;
+        appendArgs: ClassInfoRunArgs;
     });
     resetState(): void;
     get name(): string;
-    run: <T>(functionName: any, args: any, callback: any) => any;
-    _resolve(options: any): void;
-    getProcessFunc: (options?: any) => Function;
+    run: <T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => any;
+    _resolve<T>(options: ComponentMetadataRunOptions<ClassBase, T>): void;
+    getProcessFunc: <T>(options?: ComponentMetadataRunOptions<ClassBase, T>) => Function;
 }

@@ -1,8 +1,15 @@
 "use strict";
 
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+var _exportNames = {
+  ClassInfo: true,
+  ComponentMetadata: true,
+  InjectedResult: true
+};
 Object.defineProperty(exports, "ClassInfo", {
   enumerable: true,
   get: function get() {
@@ -15,13 +22,59 @@ Object.defineProperty(exports, "ComponentMetadata", {
     return _ComponentMetadata["default"];
   }
 });
+Object.defineProperty(exports, "InjectedResult", {
+  enumerable: true,
+  get: function get() {
+    return _InjectedResult["default"];
+  }
+});
 exports["default"] = void 0;
 
-var _ClassInfo = _interopRequireDefault(require("./ClassInfo"));
+var _ClassInfo = _interopRequireWildcard(require("./ClassInfo"));
 
-var _ComponentMetadata = _interopRequireDefault(require("./ComponentMetadata"));
+Object.keys(_ClassInfo).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  if (key in exports && exports[key] === _ClassInfo[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _ClassInfo[key];
+    }
+  });
+});
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+var _ComponentMetadata = _interopRequireWildcard(require("./ComponentMetadata"));
+
+Object.keys(_ComponentMetadata).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  if (key in exports && exports[key] === _ComponentMetadata[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _ComponentMetadata[key];
+    }
+  });
+});
+
+var _InjectedResult = _interopRequireWildcard(require("./InjectedResult"));
+
+Object.keys(_InjectedResult).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  if (key in exports && exports[key] === _InjectedResult[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _InjectedResult[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
@@ -120,9 +173,38 @@ var Azldi = function () {
           _ref$onCreate = _ref.onCreate,
           onCreate = _ref$onCreate === void 0 ? function () {} : _ref$onCreate,
           _ref$appendArgs = _ref.appendArgs,
-          appendArgs = _ref$appendArgs === void 0 ? {} : _ref$appendArgs;
+          appendArgs = _ref$appendArgs === void 0 ? {} : _ref$appendArgs,
+          onResultsInfoByDeps = _ref.onResultsInfoByDeps,
+          sortResultsByDeps = _ref.sortResultsByDeps;
 
-      return this._run(undefined, [], appendArgs, onCreate, true);
+      var cb = onCreate;
+      var resultsInfo = [];
+
+      if (onResultsInfoByDeps || sortResultsByDeps) {
+        cb = function cb(args) {
+          resultsInfo.push(args);
+          onCreate(args);
+        };
+      }
+
+      var results = this._run(undefined, [], appendArgs, cb, true);
+
+      if (onResultsInfoByDeps) {
+        onResultsInfoByDeps(resultsInfo);
+      }
+
+      if (sortResultsByDeps) {
+        return resultsInfo.map(function (ri) {
+          return ri.result;
+        });
+      }
+
+      return results;
+    }
+  }, {
+    key: "getEmptyRunResultsInfo",
+    value: function getEmptyRunResultsInfo() {
+      return [];
     }
   }, {
     key: "run",
@@ -133,9 +215,33 @@ var Azldi = function () {
           _ref2$onResult = _ref2.onResult,
           onResult = _ref2$onResult === void 0 ? function () {} : _ref2$onResult,
           _ref2$appendArgs = _ref2.appendArgs,
-          appendArgs = _ref2$appendArgs === void 0 ? {} : _ref2$appendArgs;
+          appendArgs = _ref2$appendArgs === void 0 ? {} : _ref2$appendArgs,
+          onResultsInfoByDeps = _ref2.onResultsInfoByDeps,
+          sortResultsByDeps = _ref2.sortResultsByDeps;
 
-      return this._run(functionName, args, appendArgs, onResult, true);
+      var cb = onResult;
+      var resultsInfo = [];
+
+      if (onResultsInfoByDeps || sortResultsByDeps) {
+        cb = function cb(args) {
+          resultsInfo.push(args);
+          onResult(args);
+        };
+      }
+
+      var result = this._run(functionName, args, appendArgs, cb, true);
+
+      if (onResultsInfoByDeps) {
+        onResultsInfoByDeps(resultsInfo);
+      }
+
+      if (sortResultsByDeps) {
+        return resultsInfo.map(function (ri) {
+          return ri.result;
+        });
+      }
+
+      return result;
     }
   }, {
     key: "runAsync",
@@ -146,9 +252,33 @@ var Azldi = function () {
           _ref3$onResult = _ref3.onResult,
           onResult = _ref3$onResult === void 0 ? function () {} : _ref3$onResult,
           _ref3$appendArgs = _ref3.appendArgs,
-          appendArgs = _ref3$appendArgs === void 0 ? {} : _ref3$appendArgs;
+          appendArgs = _ref3$appendArgs === void 0 ? {} : _ref3$appendArgs,
+          onResultsInfoByDeps = _ref3.onResultsInfoByDeps,
+          sortResultsByDeps = _ref3.sortResultsByDeps;
 
-      return this._run(functionName, args, appendArgs, onResult, false);
+      var cb = onResult;
+      var resultsInfo = [];
+
+      if (onResultsInfoByDeps || sortResultsByDeps) {
+        cb = function cb(args) {
+          resultsInfo.push(args);
+          onResult(args);
+        };
+      }
+
+      return this._run(functionName, args, appendArgs, cb, false).then(function (result) {
+        if (onResultsInfoByDeps) {
+          onResultsInfoByDeps(resultsInfo);
+        }
+
+        if (sortResultsByDeps) {
+          return resultsInfo.map(function (ri) {
+            return ri.result;
+          });
+        }
+
+        return result;
+      });
     }
   }]);
 
