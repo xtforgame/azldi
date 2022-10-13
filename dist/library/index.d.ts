@@ -10,6 +10,7 @@ export declare type AppendArgsMap = {
 };
 export declare type CreateOptions<ClassBase, Result> = {
     onCreate?: ClassInfoRunCallback<ClassBase, Result>;
+    args?: ClassInfoRunArgs;
     appendArgs?: AppendArgsMap;
     onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
     sortResultsByDeps?: boolean;
@@ -30,7 +31,7 @@ export default class Azldi<ClassBase> {
     getClassInfo: (name: any) => ClassInfo<ClassBase>;
     register(Classes: any): any;
     _run<T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, appendArgs: AppendArgsMap, callback: any, runSync?: boolean): any[] | Promise<any[]>;
-    digest({ onCreate, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: CreateOptions<ClassBase, ClassBase>): any[] | Promise<any[]>;
+    digest({ onCreate, args, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: CreateOptions<ClassBase, ClassBase>): any[] | Promise<any[]>;
     getEmptyRunResultsInfo<T = any>(): ClassInfoRunCallbackArg<ClassBase, T>[];
     run<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: RunOptions<ClassBase, T>): T[];
     runAsync<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: RunOptions<ClassBase, T>): Promise<T[]>;

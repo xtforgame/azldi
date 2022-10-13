@@ -24,6 +24,7 @@ export type AppendArgsMap = {
 
 export type CreateOptions<ClassBase, Result> = {
   onCreate?: ClassInfoRunCallback<ClassBase, Result>;
+  args?: ClassInfoRunArgs;
   appendArgs?: AppendArgsMap;
   onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
   sortResultsByDeps?: boolean;
@@ -97,6 +98,7 @@ export default class Azldi<ClassBase> {
 
   digest({
     onCreate = (() => {}),
+    args = [],
     appendArgs = {},
     onResultsInfoByDeps,
     sortResultsByDeps,
@@ -109,7 +111,7 @@ export default class Azldi<ClassBase> {
         onCreate(args);
       }
     }
-    const results = this._run(undefined, [], appendArgs, cb, true);
+    const results = this._run(undefined, args, appendArgs, cb, true);
     if (onResultsInfoByDeps) {
       onResultsInfoByDeps(resultsInfo);
     }

@@ -172,6 +172,8 @@ var Azldi = function () {
       var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
           _ref$onCreate = _ref.onCreate,
           onCreate = _ref$onCreate === void 0 ? function () {} : _ref$onCreate,
+          _ref$args = _ref.args,
+          args = _ref$args === void 0 ? [] : _ref$args,
           _ref$appendArgs = _ref.appendArgs,
           appendArgs = _ref$appendArgs === void 0 ? {} : _ref$appendArgs,
           onResultsInfoByDeps = _ref.onResultsInfoByDeps,
@@ -187,7 +189,7 @@ var Azldi = function () {
         };
       }
 
-      var results = this._run(undefined, [], appendArgs, cb, true);
+      var results = this._run(undefined, args, appendArgs, cb, true);
 
       if (onResultsInfoByDeps) {
         onResultsInfoByDeps(resultsInfo);
