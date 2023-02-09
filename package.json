@@ -1,6 +1,6 @@
 {
   "name": "azldi",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A lightweight dependency injection implementation",
   "main": "dist/library/index.js",
   "repository": {
