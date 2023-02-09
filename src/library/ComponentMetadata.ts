@@ -123,7 +123,8 @@ export default class ComponentMetadata<ClassBase> {
       this.processFunc = (...args) => this.run(
         this.functionName,
         injectedResult.inject(this.depRunFuncs.map(depRunFunc => depRunFunc(...args)), args),
-        callback
+        callback,
+        options
       );
     } else {
       this.processFunc = (...args) => Promise.all(this.depRunFuncs.map(depRunFunc => depRunFunc(...args)))

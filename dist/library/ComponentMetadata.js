@@ -101,7 +101,7 @@ var ComponentMetadata = function () {
 
           return _this.run(_this.functionName, injectedResult.inject(_this.depRunFuncs.map(function (depRunFunc) {
             return depRunFunc.apply(void 0, args);
-          }), args), callback);
+          }), args), callback, options);
         };
       } else {
         _this.processFunc = function () {
