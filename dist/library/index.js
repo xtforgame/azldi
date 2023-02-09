@@ -100,11 +100,15 @@ var Azldi = function () {
   function Azldi() {
     var _this = this;
 
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
     _classCallCheck(this, Azldi);
 
     _defineProperty(this, "classInfoMap", void 0);
 
     _defineProperty(this, "classInfoArray", void 0);
+
+    _defineProperty(this, "options", void 0);
 
     _defineProperty(this, "getClassInfo", function (name) {
       return _this.classInfoMap[name];
@@ -112,6 +116,7 @@ var Azldi = function () {
 
     this.classInfoMap = {};
     this.classInfoArray = [];
+    this.options = options;
   }
 
   _createClass(Azldi, [{
@@ -140,6 +145,7 @@ var Azldi = function () {
     key: "_run",
     value: function _run(functionName, args, appendArgs, callback) {
       var runSync = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+      var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
       var metadataMap = {};
       var runBeforeMap = {};
       var metadataArray = [];
@@ -160,7 +166,8 @@ var Azldi = function () {
       var results = metadataArray.map(function (componentMetadata) {
         var result = componentMetadata.getProcessFunc({
           callback: callback,
-          runSync: runSync
+          runSync: runSync,
+          ignoreNonexecutable: options.ignoreNonexecutable
         }).apply(void 0, _toConsumableArray(args));
         return result;
       });
@@ -219,7 +226,8 @@ var Azldi = function () {
           _ref2$appendArgs = _ref2.appendArgs,
           appendArgs = _ref2$appendArgs === void 0 ? {} : _ref2$appendArgs,
           onResultsInfoByDeps = _ref2.onResultsInfoByDeps,
-          sortResultsByDeps = _ref2.sortResultsByDeps;
+          sortResultsByDeps = _ref2.sortResultsByDeps,
+          ignoreNonexecutable = _ref2.ignoreNonexecutable;
 
       var cb = onResult;
       var resultsInfo = [];
@@ -231,7 +239,9 @@ var Azldi = function () {
         };
       }
 
-      var result = this._run(functionName, args, appendArgs, cb, true);
+      var result = this._run(functionName, args, appendArgs, cb, true, {
+        ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable
+      });
 
       if (onResultsInfoByDeps) {
         onResultsInfoByDeps(resultsInfo);
@@ -243,7 +253,9 @@ var Azldi = function () {
         });
       }
 
-      return result;
+      return result.filter(function (r) {
+        return r !== _ClassInfo.ignoredResultSymbol;
+      });
     }
   }, {
     key: "runAsync",
@@ -256,7 +268,8 @@ var Azldi = function () {
           _ref3$appendArgs = _ref3.appendArgs,
           appendArgs = _ref3$appendArgs === void 0 ? {} : _ref3$appendArgs,
           onResultsInfoByDeps = _ref3.onResultsInfoByDeps,
-          sortResultsByDeps = _ref3.sortResultsByDeps;
+          sortResultsByDeps = _ref3.sortResultsByDeps,
+          ignoreNonexecutable = _ref3.ignoreNonexecutable;
 
       var cb = onResult;
       var resultsInfo = [];
@@ -268,7 +281,9 @@ var Azldi = function () {
         };
       }
 
-      return this._run(functionName, args, appendArgs, cb, false).then(function (result) {
+      return this._run(functionName, args, appendArgs, cb, false, {
+        ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable
+      }).then(function (result) {
         if (onResultsInfoByDeps) {
           onResultsInfoByDeps(resultsInfo);
         }
@@ -279,7 +294,9 @@ var Azldi = function () {
           });
         }
 
-        return result;
+        return result.filter(function (r) {
+          return r !== _ClassInfo.ignoredResultSymbol;
+        });
       });
     }
   }]);

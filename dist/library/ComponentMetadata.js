@@ -65,11 +65,15 @@ var ComponentMetadata = function () {
     _defineProperty(this, "result", void 0);
 
     _defineProperty(this, "run", function (functionName, args, callback) {
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
       if (_this.isDone) {
         return _this.result;
       }
 
-      _this.result = _this.classInfo.run(functionName, [].concat(_toConsumableArray(args), _toConsumableArray(_this.appendArgs)), callback);
+      _this.result = _this.classInfo.run(functionName, [].concat(_toConsumableArray(args), _toConsumableArray(_this.appendArgs)), callback, {
+        ignoreNonexecutable: options.ignoreNonexecutable
+      });
       _this.isDone = true;
       return _this.result;
     });
@@ -108,7 +112,7 @@ var ComponentMetadata = function () {
           return Promise.all(_this.depRunFuncs.map(function (depRunFunc) {
             return depRunFunc.apply(void 0, args);
           })).then(function (results) {
-            return _this.run(_this.functionName, injectedResult.inject(results, args), callback);
+            return _this.run(_this.functionName, injectedResult.inject(results, args), callback, options);
           });
         };
       }

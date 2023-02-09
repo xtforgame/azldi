@@ -122,10 +122,22 @@ class MyService03 extends MyServiceBase {
   }
 }
 
+class MyServiceWithoutFunctions01 {
+  static $name = 'myServiceWithoutFunctions01';
+
+  static $type = 'service';
+
+  static $inject = ['myService00'];
+
+  static $funcDeps = {
+  };
+}
+
 export {
   MyServiceBase,
   MyService00,
   MyService01,
   MyService02,
   MyService03,
+  MyServiceWithoutFunctions01,
 };

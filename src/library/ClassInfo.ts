@@ -3,6 +3,10 @@ import { ClassType, DepsMap } from './interfaces';
 export type ClassInfoFunctionName<ClassBase> = (keyof ClassBase) | undefined;
 export type ClassInfoRunArgs = any[];
 
+export type ClassInfoRunOptions<ClassBase, Result> = {
+  ignoreNonexecutable?: boolean | null;
+};
+
 export type ClassInfoRunCallbackArg<ClassBase, Result> = {
   args: any[];
   result: Result;
@@ -10,6 +14,11 @@ export type ClassInfoRunCallbackArg<ClassBase, Result> = {
 };
 export type ClassInfoRunCallback<ClassBase, Result> = (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => void;
 
+export const ignoredResultSymbol = Symbol('ignored-result');
+
+export const canBeIgnored = (ignoreNonexecutable?: boolean | null) => {
+  return ignoreNonexecutable == null ? false : ignoreNonexecutable;
+}
 export default class ClassInfo<ClassBase> {
   Class: ClassType<ClassBase>;
 
@@ -38,8 +47,11 @@ export default class ClassInfo<ClassBase> {
     return this.Class.$inject || [];
   }
 
-  getRunFunction = <F = any>(functionName: ClassInfoFunctionName<ClassBase>) => {
+  getRunFunction = <T = any, F = any>(functionName: ClassInfoFunctionName<ClassBase>, options: ClassInfoRunOptions<ClassBase, T> = {}) => {
     if (this.instance && functionName) {
+      if (!(<any>this.instance!)[functionName] && canBeIgnored(options.ignoreNonexecutable)) {
+        return <F>(...args) => ignoredResultSymbol;
+      }
       return <F>(...args) => (<any>this.instance!)[functionName](...args);
     }
     return <F><any>(
@@ -52,14 +64,16 @@ export default class ClassInfo<ClassBase> {
     );
   }
 
-  run = <T = any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => {
-    const func = this.getRunFunction(functionName);
+  run = <T = any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>, options: ClassInfoRunOptions<ClassBase, T> = {}) => {
+    const func = this.getRunFunction<T>(functionName, options);
     const result = (<any>func)(...args);
-    callback({
-      args,
-      result,
-      classInfo: this,
-    });
+    if (result !== ignoredResultSymbol) {
+      callback({
+        args,
+        result,
+        classInfo: this,
+      });
+    }
     return <T>result;
   };
 }

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = void 0;
+exports.ignoredResultSymbol = exports["default"] = exports.canBeIgnored = void 0;
 
 function _construct(Parent, args, Class) { if (_isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
 
@@ -26,6 +26,15 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var ignoredResultSymbol = Symbol('ignored-result');
+exports.ignoredResultSymbol = ignoredResultSymbol;
+
+var canBeIgnored = function canBeIgnored(ignoreNonexecutable) {
+  return ignoreNonexecutable == null ? false : ignoreNonexecutable;
+};
+
+exports.canBeIgnored = canBeIgnored;
 
 var ClassInfo = function ClassInfo(Class) {
   var _this = this;
@@ -55,7 +64,15 @@ var ClassInfo = function ClassInfo(Class) {
   });
 
   _defineProperty(this, "getRunFunction", function (functionName) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
     if (_this.instance && functionName) {
+      if (!_this.instance[functionName] && canBeIgnored(options.ignoreNonexecutable)) {
+        return function () {
+          return ignoredResultSymbol;
+        };
+      }
+
       return function () {
         var _ref;
 
@@ -77,14 +94,20 @@ var ClassInfo = function ClassInfo(Class) {
   });
 
   _defineProperty(this, "run", function (functionName, args, callback) {
-    var func = _this.getRunFunction(functionName);
+    var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+    var func = _this.getRunFunction(functionName, options);
 
     var result = func.apply(void 0, _toConsumableArray(args));
-    callback({
-      args: args,
-      result: result,
-      classInfo: _this
-    });
+
+    if (result !== ignoredResultSymbol) {
+      callback({
+        args: args,
+        result: result,
+        classInfo: _this
+      });
+    }
+
     return result;
   });
 

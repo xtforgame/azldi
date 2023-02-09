@@ -10,6 +10,7 @@ import ClassInfo, {
 export type ComponentMetadataRunOptions<ClassBase, Result> = {
   callback?: ClassInfoRunCallback<ClassBase, Result>;
   runSync?: boolean;
+  ignoreNonexecutable?: boolean | null;
 };
 
 export default class ComponentMetadata<ClassBase> {
@@ -74,11 +75,16 @@ export default class ComponentMetadata<ClassBase> {
     return this.classInfo.name;
   }
 
-  run = <T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => {
+  run = <T>(
+    functionName: ClassInfoFunctionName<ClassBase>,
+    args: ClassInfoRunArgs,
+    callback: ClassInfoRunCallback<ClassBase, T>,
+    options: ComponentMetadataRunOptions<ClassBase, T> = {}
+  ) => {
     if (this.isDone) {
       return this.result;
     }
-    this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback);
+    this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback, { ignoreNonexecutable: options.ignoreNonexecutable });
     this.isDone = true;
     return this.result as T;
   };
@@ -124,7 +130,8 @@ export default class ComponentMetadata<ClassBase> {
       .then(results => this.run(
         this.functionName,
         injectedResult.inject(results, args),
-        callback
+        callback,
+        options
       ));
     }
     return this.processFunc;

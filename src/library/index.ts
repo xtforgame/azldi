@@ -4,6 +4,7 @@ import ClassInfo, {
   ClassInfoRunArgs,
   ClassInfoRunCallbackArg,
   ClassInfoRunCallback,
+  ignoredResultSymbol,
 } from './ClassInfo';
 import ComponentMetadata, { ComponentMetadataRunOptions } from './ComponentMetadata';
 import InjectedResult from './InjectedResult';
@@ -30,21 +31,33 @@ export type CreateOptions<ClassBase, Result> = {
   sortResultsByDeps?: boolean;
 };
 
+export type RunCoreOptions<ClassBase, Result> = {
+  ignoreNonexecutable?: boolean | null;
+};
+
 export type RunOptions<ClassBase, Result> = {
   onResult?: ClassInfoRunCallback<ClassBase, Result>;
   appendArgs?: AppendArgsMap;
   onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
   sortResultsByDeps?: boolean;
+  ignoreNonexecutable?: boolean | null;
 };
+
+export type AzldiOptions<ClassBase> = {
+  ignoreNonexecutableByDefault?: boolean | null;
+}
 
 export default class Azldi<ClassBase> {
   classInfoMap: { [s: string]: ClassInfo<ClassBase> };
 
   classInfoArray: ClassInfo<ClassBase>[];
 
-  constructor() {
+  options: AzldiOptions<ClassBase>;
+
+  constructor(options: AzldiOptions<ClassBase> = {}) {
     this.classInfoMap = {};
     this.classInfoArray = [];
+    this.options = options;
   }
 
   get<T=any>(name) : T | undefined {
@@ -66,7 +79,13 @@ export default class Azldi<ClassBase> {
     return true;
   }
 
-  _run<T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, appendArgs: AppendArgsMap, callback, runSync = true) {
+  _run<T>(
+    functionName: ClassInfoFunctionName<ClassBase>,
+    args: ClassInfoRunArgs,
+    appendArgs: AppendArgsMap,
+    callback, runSync = true,
+    options: RunCoreOptions<ClassBase, T> = {},
+  ) {
     const metadataMap = {};
     const runBeforeMap = {};
     const metadataArray : ComponentMetadata<ClassBase>[] = [];
@@ -89,6 +108,7 @@ export default class Azldi<ClassBase> {
       const result = componentMetadata.getProcessFunc<T>({
         callback,
         runSync,
+        ignoreNonexecutable: options.ignoreNonexecutable,
       })(...args);
       return result;
     });
@@ -130,6 +150,7 @@ export default class Azldi<ClassBase> {
     appendArgs = {},
     onResultsInfoByDeps,
     sortResultsByDeps,
+    ignoreNonexecutable,
   }: RunOptions<ClassBase, T> = {}): T[] {
     let cb = onResult;
     const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
@@ -139,14 +160,16 @@ export default class Azldi<ClassBase> {
         onResult(args);
       }
     }
-    const result = <any>this._run(functionName, args, appendArgs, cb, true);
+    const result = <any>this._run(functionName, args, appendArgs, cb, true, {
+      ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
+    });
     if (onResultsInfoByDeps) {
       onResultsInfoByDeps(resultsInfo);
     }
     if (sortResultsByDeps) {
       return resultsInfo.map(ri => ri.result);
     }
-    return result;
+    return result.filter(r => r !== ignoredResultSymbol);
   }
 
   runAsync<T=any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs = [], {
@@ -154,6 +177,7 @@ export default class Azldi<ClassBase> {
     appendArgs = {},
     onResultsInfoByDeps,
     sortResultsByDeps,
+    ignoreNonexecutable,
   }: RunOptions<ClassBase, T> = {}) : Promise<T[]> {
     let cb = onResult;
     const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
@@ -163,7 +187,9 @@ export default class Azldi<ClassBase> {
         onResult(args);
       }
     }
-    return (this._run(functionName, args, appendArgs, cb, false) as Promise<any[]>)
+    return (this._run(functionName, args, appendArgs, cb, false, {
+      ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
+    }) as Promise<any[]>)
     .then((result) => {
       if (onResultsInfoByDeps) {
         onResultsInfoByDeps(resultsInfo);
@@ -171,7 +197,7 @@ export default class Azldi<ClassBase> {
       if (sortResultsByDeps) {
         return resultsInfo.map(ri => ri.result);
       }
-      return <any>result;
+      return <any>result.filter(r => r !== ignoredResultSymbol);
     });
 
   }

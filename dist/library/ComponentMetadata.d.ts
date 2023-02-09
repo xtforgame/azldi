@@ -3,6 +3,7 @@ import ClassInfo, { ClassInfoFunctionName, ClassInfoRunArgs, ClassInfoRunCallbac
 export declare type ComponentMetadataRunOptions<ClassBase, Result> = {
     callback?: ClassInfoRunCallback<ClassBase, Result>;
     runSync?: boolean;
+    ignoreNonexecutable?: boolean | null;
 };
 export default class ComponentMetadata<ClassBase> {
     classInfo: ClassInfo<ClassBase>;
@@ -31,7 +32,7 @@ export default class ComponentMetadata<ClassBase> {
     });
     resetState(): void;
     get name(): string;
-    run: <T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>) => any;
+    run: <T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>, options?: ComponentMetadataRunOptions<ClassBase, T>) => any;
     _resolve<T>(options: ComponentMetadataRunOptions<ClassBase, T>): void;
     getProcessFunc: <T>(options?: ComponentMetadataRunOptions<ClassBase, T>) => Function;
 }
