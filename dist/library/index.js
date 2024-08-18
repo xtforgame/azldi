@@ -289,9 +289,9 @@ var Azldi = function () {
         }
 
         if (sortResultsByDeps) {
-          return resultsInfo.map(function (ri) {
+          return Promise.all(resultsInfo.map(function (ri) {
             return ri.result;
-          });
+          }));
         }
 
         return result.filter(function (r) {

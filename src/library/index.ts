@@ -195,7 +195,7 @@ export default class Azldi<ClassBase> {
         onResultsInfoByDeps(resultsInfo);
       }
       if (sortResultsByDeps) {
-        return resultsInfo.map(ri => ri.result);
+        return Promise.all(resultsInfo.map(ri => ri.result));
       }
       return <any>result.filter(r => r !== ignoredResultSymbol);
     });
