@@ -5,11 +5,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.ignoredResultSymbol = exports["default"] = exports.canBeIgnored = void 0;
-var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/esm/construct"));
-var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/esm/toConsumableArray"));
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/esm/createClass"));
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/esm/classCallCheck"));
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/esm/defineProperty"));
+var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/construct"));
+var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
+var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
+var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var ignoredResultSymbol = exports.ignoredResultSymbol = Symbol('ignored-result');
 var canBeIgnored = exports.canBeIgnored = function canBeIgnored(ignoreNonexecutable) {
   return ignoreNonexecutable == null ? false : ignoreNonexecutable;

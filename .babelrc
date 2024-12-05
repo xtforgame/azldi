@@ -15,7 +15,7 @@
           {
             "helpers": true,
             "regenerator": true,
-            "useESModules": true // 啟用 ESM 特性
+            "useESModules": true
           }
         ]
       ]
@@ -31,7 +31,7 @@
           {
             "helpers": true,
             "regenerator": true,
-            "useESModules": true // 啟用 ESM 特性
+            "useESModules": false
           }
         ]
       ]
