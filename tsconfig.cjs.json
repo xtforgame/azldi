@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,           // 只生成一次型別檔案即可
+    "outDir": "./dist/cjs",
+    "module": "CommonJS"
+  }
+}

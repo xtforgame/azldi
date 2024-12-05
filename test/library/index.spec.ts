@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, no-undef */
 
 import chai from 'chai';
-import Azldi, { ClassInfoRunCallbackArg } from '../../src/library';
+import Azldi, { ClassInfoRunCallbackArg } from '../../src';
 
 import {
   MyServiceBase,

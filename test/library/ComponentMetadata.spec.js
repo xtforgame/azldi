@@ -4,7 +4,7 @@ import chai from 'chai';
 import Azldi, {
   ClassInfo,
   ComponentMetadata,
-} from '../../src/library';
+} from '../../src';
 
 import {
   MyService00,

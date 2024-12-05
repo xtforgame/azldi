@@ -1,37 +1,40 @@
 {
   "presets": [
-    ["@babel/preset-env", {
-      "targets": { 
-        "node": "10"
-      }
-    }],
-    "@babel/typescript"
-  ],
-  "plugins": [
-    "@babel/proposal-class-properties",
-    "@babel/proposal-object-rest-spread"
+    ["@babel/preset-env", { "modules": "commonjs" }],
+    "@babel/preset-typescript"
   ],
   "env": {
-    "test": {
+    "esm": {
+      "presets": [
+        ["@babel/preset-env", { "modules": false }],
+        "@babel/preset-typescript"
+      ],
       "plugins": [
-        ["module-resolver", {
-          "extensions": [".js", ".ts"]
-        }]
+        [
+          "@babel/plugin-transform-runtime",
+          {
+            "helpers": true,
+            "regenerator": true,
+            "useESModules": true // 啟用 ESM 特性
+          }
+        ]
       ]
     },
-    "development": {
+    "cjs": {
+      "presets": [
+        ["@babel/preset-env", { "modules": "commonjs" }],
+        "@babel/preset-typescript"
+      ],
       "plugins": [
-        ["module-resolver", {
-          "extensions": [".js", ".ts"]
-        }]
+        [
+          "@babel/plugin-transform-runtime",
+          {
+            "helpers": true,
+            "regenerator": true,
+            "useESModules": true // 啟用 ESM 特性
+          }
+        ]
       ]
-    },
-    "production": {
-      "plugins": [
-        ["module-resolver", {
-          "extensions": [".js", ".ts"]
-        }]
-      ]
-    },
+    }
   }
 }
