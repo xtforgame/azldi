@@ -34,6 +34,7 @@ export type CreateOptions<ClassBase, Result> = {
 
 export type RunCoreOptions<ClassBase, Result> = {
   ignoreNonexecutable?: boolean | null;
+  shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
 };
 
 export type RunOptions<ClassBase, Result> = {
@@ -42,6 +43,7 @@ export type RunOptions<ClassBase, Result> = {
   onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
   sortResultsByDeps?: boolean;
   ignoreNonexecutable?: boolean | null;
+  shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
 };
 
 export type AzldiOptions<ClassBase> = {
@@ -88,6 +90,8 @@ export default class Azldi<ClassBase> {
     runSync = true,
     options: RunCoreOptions<ClassBase, T> = {},
   ) {
+    const { shortCircuit } = options;
+
     const metadataMap: any = {};
     const runBeforeMap: any = {};
     const metadataArray : ComponentMetadata<ClassBase>[] = [];
@@ -105,6 +109,52 @@ export default class Azldi<ClassBase> {
       metadataMap[componentMetadata.name] = componentMetadata;
       metadataArray.push(componentMetadata);
     });
+
+    if (shortCircuit) {
+      const shortCircuitState = { shortCircuited: false };
+      const wrappedCallback = (arg: any) => {
+        callback(arg);
+        if (!shortCircuitState.shortCircuited && shortCircuit(arg)) {
+          shortCircuitState.shortCircuited = true;
+        }
+      };
+
+      if (runSync) {
+        const cmOptions = {
+          callback: wrappedCallback,
+          runSync,
+          ignoreNonexecutable: options.ignoreNonexecutable,
+          shortCircuitState,
+        };
+        const results: any[] = [];
+        for (const componentMetadata of metadataArray) {
+          if (shortCircuitState.shortCircuited) break;
+          const result = componentMetadata.getProcessFunc<T>(cmOptions)(...args);
+          results.push(result);
+        }
+        return results;
+      }
+      // Async: check predicate after await (resolved value), not in callback
+      const cmOptions = {
+        callback,
+        runSync,
+        ignoreNonexecutable: options.ignoreNonexecutable,
+        shortCircuitState,
+      };
+      return (async () => {
+        const results: any[] = [];
+        for (const componentMetadata of metadataArray) {
+          if (shortCircuitState.shortCircuited) break;
+          const resolved = await componentMetadata.getProcessFunc<T>(cmOptions)(...args);
+          results.push(resolved);
+          if (!shortCircuitState.shortCircuited && resolved !== ignoredResultSymbol
+            && shortCircuit({ args, result: <any>resolved, classInfo: componentMetadata.classInfo })) {
+            shortCircuitState.shortCircuited = true;
+          }
+        }
+        return results;
+      })();
+    }
 
     const results = metadataArray.map((componentMetadata) => {
       const result = componentMetadata.getProcessFunc<T>({
@@ -153,10 +203,11 @@ export default class Azldi<ClassBase> {
     onResultsInfoByDeps,
     sortResultsByDeps,
     ignoreNonexecutable,
+    shortCircuit,
   }: RunOptions<ClassBase, T> = {}): T[] {
     let cb = onResult;
     const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
-    if (onResultsInfoByDeps || sortResultsByDeps) {
+    if (onResultsInfoByDeps || sortResultsByDeps || shortCircuit) {
       cb = (args) => {
         resultsInfo.push(args);
         onResult(args);
@@ -164,11 +215,12 @@ export default class Azldi<ClassBase> {
     }
     const result = <any>this._run(functionName, args, appendArgs, cb, true, {
       ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
+      shortCircuit,
     });
     if (onResultsInfoByDeps) {
       onResultsInfoByDeps(resultsInfo);
     }
-    if (sortResultsByDeps) {
+    if (sortResultsByDeps || shortCircuit) {
       return resultsInfo.map(ri => ri.result);
     }
     return (result as any[]).filter(r => r !== ignoredResultSymbol);
@@ -180,10 +232,11 @@ export default class Azldi<ClassBase> {
     onResultsInfoByDeps,
     sortResultsByDeps,
     ignoreNonexecutable,
+    shortCircuit,
   }: RunOptions<ClassBase, T> = {}) : Promise<T[]> {
     let cb = onResult;
     const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
-    if (onResultsInfoByDeps || sortResultsByDeps) {
+    if (onResultsInfoByDeps || sortResultsByDeps || shortCircuit) {
       cb = (args) => {
         resultsInfo.push(args);
         onResult(args);
@@ -191,10 +244,14 @@ export default class Azldi<ClassBase> {
     }
     return (this._run(functionName, args, appendArgs, cb, false, {
       ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
+      shortCircuit,
     }) as Promise<any[]>)
     .then((result) => {
       if (onResultsInfoByDeps) {
         onResultsInfoByDeps(resultsInfo);
+      }
+      if (shortCircuit) {
+        return <any>result.filter(r => r !== ignoredResultSymbol);
       }
       if (sortResultsByDeps) {
         return Promise.all(resultsInfo.map(ri => ri.result));

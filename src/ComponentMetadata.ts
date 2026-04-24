@@ -5,12 +5,16 @@ import ClassInfo, {
   ClassInfoFunctionName,
   ClassInfoRunArgs,
   ClassInfoRunCallback,
+  ignoredResultSymbol,
 } from './ClassInfo';
+
+export type ShortCircuitState = { shortCircuited: boolean };
 
 export type ComponentMetadataRunOptions<ClassBase, Result> = {
   callback?: ClassInfoRunCallback<ClassBase, Result>;
   runSync?: boolean;
   ignoreNonexecutable?: boolean | null;
+  shortCircuitState?: ShortCircuitState;
 };
 
 export default class ComponentMetadata<ClassBase> {
@@ -83,6 +87,9 @@ export default class ComponentMetadata<ClassBase> {
   ) => {
     if (this.isDone) {
       return this.result;
+    }
+    if (options.shortCircuitState?.shortCircuited) {
+      return ignoredResultSymbol as any as T;
     }
     this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback, { ignoreNonexecutable: options.ignoreNonexecutable });
     this.isDone = true;
