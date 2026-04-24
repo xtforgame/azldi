@@ -1,9 +1,13 @@
 import { Injects } from './interfaces';
 import ClassInfo, { ClassInfoFunctionName, ClassInfoRunArgs, ClassInfoRunCallback } from './ClassInfo';
+export type ShortCircuitState = {
+    shortCircuited: boolean;
+};
 export type ComponentMetadataRunOptions<ClassBase, Result> = {
     callback?: ClassInfoRunCallback<ClassBase, Result>;
     runSync?: boolean;
     ignoreNonexecutable?: boolean | null;
+    shortCircuitState?: ShortCircuitState;
 };
 export default class ComponentMetadata<ClassBase> {
     classInfo: ClassInfo<ClassBase>;

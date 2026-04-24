@@ -10,6 +10,7 @@ var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/cl
 var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
 var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 var _InjectedResult = _interopRequireDefault(require("./InjectedResult"));
+var _ClassInfo = require("./ClassInfo");
 /* eslint-disable no-underscore-dangle */
 var ComponentMetadata = exports["default"] = /*#__PURE__*/function () {
   function ComponentMetadata(_ref) {
@@ -22,9 +23,13 @@ var ComponentMetadata = exports["default"] = /*#__PURE__*/function () {
       appendArgs = _ref$appendArgs === void 0 ? [] : _ref$appendArgs;
     (0, _classCallCheck2["default"])(this, ComponentMetadata);
     (0, _defineProperty2["default"])(this, "run", function (functionName, args, callback) {
+      var _options$shortCircuit;
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
       if (_this.isDone) {
         return _this.result;
+      }
+      if ((_options$shortCircuit = options.shortCircuitState) !== null && _options$shortCircuit !== void 0 && _options$shortCircuit.shortCircuited) {
+        return _ClassInfo.ignoredResultSymbol;
       }
       _this.result = _this.classInfo.run(functionName, [].concat((0, _toConsumableArray2["default"])(args), (0, _toConsumableArray2["default"])(_this.appendArgs)), callback, {
         ignoreNonexecutable: options.ignoreNonexecutable

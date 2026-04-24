@@ -18,6 +18,7 @@ export type CreateOptions<ClassBase, Result> = {
 };
 export type RunCoreOptions<ClassBase, Result> = {
     ignoreNonexecutable?: boolean | null;
+    shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
 };
 export type RunOptions<ClassBase, Result> = {
     onResult?: ClassInfoRunCallback<ClassBase, Result>;
@@ -25,6 +26,7 @@ export type RunOptions<ClassBase, Result> = {
     onResultsInfoByDeps?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>[]) => void;
     sortResultsByDeps?: boolean;
     ignoreNonexecutable?: boolean | null;
+    shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
 };
 export type AzldiOptions<ClassBase> = {
     ignoreNonexecutableByDefault?: boolean | null;
@@ -42,6 +44,6 @@ export default class Azldi<ClassBase> {
     _run<T>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, appendArgs: AppendArgsMap, callback: any, runSync?: boolean, options?: RunCoreOptions<ClassBase, T>): any[] | Promise<any[]>;
     digest({ onCreate, args, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: CreateOptions<ClassBase, ClassBase>): any[] | Promise<any[]>;
     getEmptyRunResultsInfo<T = any>(): ClassInfoRunCallbackArg<ClassBase, T>[];
-    run<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, }?: RunOptions<ClassBase, T>): T[];
-    runAsync<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, }?: RunOptions<ClassBase, T>): Promise<T[]>;
+    run<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, shortCircuit, }?: RunOptions<ClassBase, T>): T[];
+    runAsync<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, shortCircuit, }?: RunOptions<ClassBase, T>): Promise<T[]>;
 }

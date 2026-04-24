@@ -4,6 +4,7 @@ import _createClass from "@babel/runtime/helpers/esm/createClass";
 import _defineProperty from "@babel/runtime/helpers/esm/defineProperty";
 /* eslint-disable no-underscore-dangle */
 import InjectedResult from './InjectedResult';
+import { ignoredResultSymbol } from './ClassInfo';
 var ComponentMetadata = /*#__PURE__*/function () {
   function ComponentMetadata(_ref) {
     var _this = this;
@@ -15,9 +16,13 @@ var ComponentMetadata = /*#__PURE__*/function () {
       appendArgs = _ref$appendArgs === void 0 ? [] : _ref$appendArgs;
     _classCallCheck(this, ComponentMetadata);
     _defineProperty(this, "run", function (functionName, args, callback) {
+      var _options$shortCircuit;
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
       if (_this.isDone) {
         return _this.result;
+      }
+      if ((_options$shortCircuit = options.shortCircuitState) !== null && _options$shortCircuit !== void 0 && _options$shortCircuit.shortCircuited) {
+        return ignoredResultSymbol;
       }
       _this.result = _this.classInfo.run(functionName, [].concat(_toConsumableArray(args), _toConsumableArray(_this.appendArgs)), callback, {
         ignoreNonexecutable: options.ignoreNonexecutable
