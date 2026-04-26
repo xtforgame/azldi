@@ -525,6 +525,299 @@ describe('9. onResult / onCreate Callbacks', () => {
 
       expect(collected).to.deep.equal(['simpleA', 'simpleB']);
     });
+
+    it('receives resolved value (not a Promise) for async methods', async () => {
+      class AsyncPluginA {
+        static $name = 'asyncPluginA';
+        static $inject = [];
+        async doWork() { return 'resultA'; }
+      }
+      class AsyncPluginB {
+        static $name = 'asyncPluginB';
+        static $inject = [];
+        async doWork() { return 'resultB'; }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([AsyncPluginA, AsyncPluginB]);
+      azldi.digest();
+
+      const collected: any[] = [];
+      await azldi.runAsync('doWork', [], {
+        onResult: ({ result, classInfo }) => {
+          collected.push({
+            name: classInfo.name,
+            result,
+            isPromise: !!(result && typeof result.then === 'function'),
+          });
+        },
+      });
+
+      expect(collected).to.deep.equal([
+        { name: 'asyncPluginA', result: 'resultA', isPromise: false },
+        { name: 'asyncPluginB', result: 'resultB', isPromise: false },
+      ]);
+    });
+
+    it('transform chain: getter+onResult sees resolved values across plugins', async () => {
+      class IncBy10 {
+        static $name = 'incBy10';
+        static $inject = [];
+        async transform(_ir: any, getVal: () => number) { return getVal() + 10; }
+      }
+      class IncBy20 {
+        static $name = 'incBy20';
+        static $inject = [];
+        async transform(_ir: any, getVal: () => number) { return getVal() + 20; }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([IncBy10, IncBy20]);
+      azldi.digest();
+
+      let value = 100;
+      const getValue = () => value;
+
+      await azldi.runAsync('transform', [getValue], {
+        onResult: ({ result }) => {
+          if (result != null) value = result;
+        },
+      });
+
+      expect(value).to.equal(130);
+    });
+
+    it('runs sequentially when onResult is provided (later plugin sees earlier resolved state)', async () => {
+      const fireOrder: string[] = [];
+
+      class SlowPlugin {
+        static $name = 'slowPlugin';
+        static $inject = [];
+        async doWork(_ir: any, observer: (n: string) => void) {
+          await new Promise(resolve => setTimeout(resolve, 30));
+          observer('slowPlugin:body');
+          return 'slow';
+        }
+      }
+      class FastPlugin {
+        static $name = 'fastPlugin';
+        static $inject = [];
+        async doWork(_ir: any, observer: (n: string) => void) {
+          observer('fastPlugin:body');
+          return 'fast';
+        }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([SlowPlugin, FastPlugin]);
+      azldi.digest();
+
+      await azldi.runAsync('doWork', [(n: string) => fireOrder.push(n)], {
+        onResult: ({ classInfo }) => { fireOrder.push(`${classInfo.name}:onResult`); },
+      });
+
+      expect(fireOrder).to.deep.equal([
+        'slowPlugin:body',
+        'slowPlugin:onResult',
+        'fastPlugin:body',
+        'fastPlugin:onResult',
+      ]);
+    });
+
+    it('shortCircuit + onResult: onResult also receives resolved value', async () => {
+      class AsyncP1 {
+        static $name = 'asyncP1';
+        static $inject = [];
+        async findOne() { return null; }
+      }
+      class AsyncP2 {
+        static $name = 'asyncP2';
+        static $inject = [];
+        async findOne() { return { id: 'p2', value: 42 }; }
+      }
+      class AsyncP3 {
+        static $name = 'asyncP3';
+        static $inject = [];
+        async findOne() { return { id: 'p3' }; }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([AsyncP1, AsyncP2, AsyncP3]);
+      azldi.digest();
+
+      const collected: any[] = [];
+      await azldi.runAsync('findOne', [], {
+        onResult: ({ result, classInfo }) => {
+          collected.push({
+            name: classInfo.name,
+            result,
+            isPromise: !!(result && typeof result.then === 'function'),
+          });
+        },
+        shortCircuit: ({ result }) => result != null,
+      });
+
+      expect(collected).to.deep.equal([
+        { name: 'asyncP1', result: null, isPromise: false },
+        { name: 'asyncP2', result: { id: 'p2', value: 42 }, isPromise: false },
+      ]);
+    });
+
+    it('without onResult: parallel execution still works (no Promise leak in final results)', async () => {
+      class AsyncR1 {
+        static $name = 'asyncR1';
+        static $inject = [];
+        async doWork() { return 'r1'; }
+      }
+      class AsyncR2 {
+        static $name = 'asyncR2';
+        static $inject = [];
+        async doWork() { return 'r2'; }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([AsyncR1, AsyncR2]);
+      azldi.digest();
+
+      const results = await azldi.runAsync('doWork', []);
+
+      expect(results).to.deep.equal(['r1', 'r2']);
+    });
+
+    it('onResultsInfoByDeps receives resolved values (not Promises) for async methods', async () => {
+      class AsyncI1 {
+        static $name = 'asyncI1';
+        static $inject = [];
+        async doWork() { return 'i1'; }
+      }
+      class AsyncI2 {
+        static $name = 'asyncI2';
+        static $inject = [];
+        async doWork() { return 'i2'; }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([AsyncI1, AsyncI2]);
+      azldi.digest();
+
+      let info: any[] = [];
+      await azldi.runAsync('doWork', [], {
+        onResultsInfoByDeps: (args) => { info = args; },
+      });
+
+      expect(info.map(i => ({
+        name: i.classInfo.name,
+        result: i.result,
+        isPromise: !!(i.result && typeof i.result.then === 'function'),
+      }))).to.deep.equal([
+        { name: 'asyncI1', result: 'i1', isPromise: false },
+        { name: 'asyncI2', result: 'i2', isPromise: false },
+      ]);
+    });
+
+    it('sibling deps: onResult fires in registration order even when slow dep is registered first', async () => {
+      const fireOrder: string[] = [];
+
+      class SlowSibling {
+        static $name = 'slowSibling';
+        static $inject = [];
+        async transform(_ir: any, getVal: () => number) {
+          await new Promise(resolve => setTimeout(resolve, 30));
+          return getVal() + 10;
+        }
+      }
+      class FastSibling {
+        static $name = 'fastSibling';
+        static $inject = [];
+        async transform(_ir: any, getVal: () => number) {
+          return getVal() + 100;
+        }
+      }
+      class Parent {
+        static $name = 'parent';
+        static $inject = [];
+        static $funcDeps = { transform: ['slowSibling', 'fastSibling'] };
+        async transform(_ir: any, getVal: () => number) {
+          return getVal() + 1;
+        }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([Parent, SlowSibling, FastSibling]);
+      azldi.digest();
+
+      let value = 0;
+      const getValue = () => value;
+
+      await azldi.runAsync('transform', [getValue], {
+        onResult: ({ result, classInfo }) => {
+          fireOrder.push(`${classInfo.name}:${result}`);
+          if (result != null) value = result;
+        },
+      });
+
+      expect(fireOrder).to.deep.equal([
+        'slowSibling:10',
+        'fastSibling:110',
+        'parent:111',
+      ]);
+      expect(value).to.equal(111);
+    });
+
+    it('sibling deps + shortCircuit + onResult: siblings fire in deterministic order', async () => {
+      const fireOrder: string[] = [];
+
+      class SlowDep {
+        static $name = 'slowDep';
+        static $inject = [];
+        async findOne() {
+          await new Promise(resolve => setTimeout(resolve, 30));
+          return null;
+        }
+      }
+      class FastDep {
+        static $name = 'fastDep';
+        static $inject = [];
+        async findOne() {
+          return { id: 'fast' };
+        }
+      }
+      class Aggregator {
+        static $name = 'aggregator';
+        static $inject = [];
+        static $funcDeps = { findOne: ['slowDep', 'fastDep'] };
+        async findOne(injectedResult: any) {
+          const deps = injectedResult.getDepsInfo();
+          return deps.fastDep.result || deps.slowDep.result;
+        }
+      }
+      class TrailingPlugin {
+        static $name = 'trailingPlugin';
+        static $inject = [];
+        async findOne() {
+          return { id: 'trailing' };
+        }
+      }
+
+      const azldi = new Azldi<any>();
+      azldi.register([Aggregator, SlowDep, FastDep, TrailingPlugin]);
+      azldi.digest();
+
+      await azldi.runAsync('findOne', [], {
+        onResult: ({ result, classInfo }) => {
+          fireOrder.push(`${classInfo.name}:${result == null ? 'null' : 'hit'}`);
+        },
+        shortCircuit: ({ result }) => result != null,
+      });
+
+      // siblings fire in registration order (slowDep, fastDep), then parent.
+      // Aggregator returns hit -> shortCircuit triggers -> trailingPlugin skipped.
+      expect(fireOrder).to.deep.equal([
+        'slowDep:null',
+        'fastDep:hit',
+        'aggregator:hit',
+      ]);
+    });
   });
 
   describe('onCreate (digest)', () => {

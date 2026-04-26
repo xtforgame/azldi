@@ -9,9 +9,15 @@ AZLDI is a lightweight Dependency Injection (DI) implementation designed specifi
 - Flexible dependency management
 - Customizable injection options
 - Dependency sorting capabilities
-- Callback function support for handling injection results
+- Callback function support for handling injection results (with proper resolved-value semantics for `runAsync`, see [v1.0.12 notes](#whats-new-in-v1012))
 - Ability to append additional arguments to specific classes
-- Immediate result processing with onResult and onCreate callbacks
+- Immediate result processing with `onResult` / `onCreate` callbacks
+- Early termination via `shortCircuit`
+- Optional skipping of missing methods via `ignoreNonexecutable` / `ignoreNonexecutableByDefault`
+
+## What's new in v1.0.12
+
+- **`runAsync` + `onResult` Promise-resolution fix**: previously, `onResult` received an unresolved `Promise` when the plugin method was `async`, breaking transform-chain patterns (getter + onResult). Now the callback fires with the resolved value, and `runAsync` switches to **sequential** execution when `onResult` is provided so the getter pattern works deterministically across plugins. Same fix applies to `onResultsInfoByDeps` and `shortCircuit + onResult`. Behavior without `onResult` / `shortCircuit` is unchanged (still parallel). See [docs/azldi-bugfix-onresult-async.md](docs/azldi-bugfix-onresult-async.md) for the full analysis.
 
 ## Installation
 
@@ -475,6 +481,11 @@ await di.runAsync<any>('findOne', [{
 });
 ```
 
+> **`runAsync` + `onResult` semantics (since v1.0.12)**:
+> - `result` is the **resolved value** for `async` methods (not a `Promise`).
+> - Plugins execute **sequentially** in dependency order — each plugin's `onResult` finishes before the next plugin's body starts. This makes the getter pattern (e.g. `isFound()`, transform chains) work correctly.
+> - Without `onResult` (and without `shortCircuit`), `runAsync` keeps the parallel behavior for performance.
+
 ##### Using onCreate with digest
 
 The `onCreate` callback is called immediately after each class is instantiated during the `digest` process:
@@ -772,8 +783,20 @@ constructor(options: AzldiOptions<ClassBase> = {})
 - `sortResultsByDeps`: Sort results by dependency order
 - `onResultsInfoByDeps`: Callback function to receive information about the execution order
 - `appendArgs`: Object mapping class names to arrays of additional arguments to append
-- `onResult`: Callback function called immediately after each class's method execution (for run and runAsync)
-- `onCreate`: Callback function called immediately after each class is instantiated (for digest)
+- `onResult`: Callback function called after each class's method execution (for `run` and `runAsync`). For `runAsync` (since v1.0.12) it receives the resolved value and switches execution to sequential.
+- `onCreate`: Callback function called immediately after each class is instantiated (for `digest`)
+- `shortCircuit`: Predicate `({ args, result, classInfo }) => boolean`. When it returns `true`, no further classes are executed (for `run` and `runAsync`). The async path runs sequentially to enable early termination.
+- `ignoreNonexecutable`: When `true`, classes that don't implement the called method are skipped instead of throwing. Per-call override of the constructor option `ignoreNonexecutableByDefault`.
+
+#### Constructor Options
+
+```typescript
+new Azldi<ClassBase>({
+  ignoreNonexecutableByDefault: true, // skip missing methods by default
+});
+```
+
+For richer details (sequential semantics, callback timing, shortCircuit behavior, etc.), see [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Development
 

@@ -268,8 +268,28 @@ Same as `run()`.
 
 - Same as `run()` but handles Promise-returning methods.
 - Dependencies are resolved via `Promise.all()` before the dependent method executes.
-- When `shortCircuit` is provided, execution is sequential (not parallel) to allow early termination.
+- **Execution mode**:
+  - **Parallel** (default): when no `onResult` and no `shortCircuit` are provided, all top-level classes start their `processFunc` synchronously and resolve via `Promise.all()`.
+  - **Sequential**: when `onResult` is provided (without `shortCircuit`) or `shortCircuit` is provided, classes execute one-by-one in dependency order. Each `await` completes — including any callback firing — before the next class starts.
+- **Callback timing for async methods** (since v1.0.12): `onResult` / `onResultsInfoByDeps` always receive the **resolved value**, never a `Promise`. `ClassInfo.run` defers callback firing via `.then()` when the method returns a thenable.
 - Final results are awaited via `Promise.all()` before returning.
+
+### Sequential Semantics & Transform Chain
+
+The sequential mode (triggered by `onResult`) is what makes the transform-chain pattern work: each plugin's `onResult` completes its mutation of shared state (typically captured by a getter passed in `args`) before the next plugin's body reads that state.
+
+```typescript
+let value = 100;
+const getValue = () => value;
+
+await azldi.runAsync('transform', [getValue], {
+  onResult: ({ result }) => { if (result != null) value = result; },
+});
+// PluginA reads getValue() = 100, returns 110 → onResult sets value = 110
+// PluginB reads getValue() = 110 (sequential), returns 130 → onResult sets value = 130
+```
+
+Without `onResult` (or `shortCircuit`), `runAsync` stays parallel for performance.
 
 ### Real-world Usage
 
@@ -375,10 +395,13 @@ class DataProcessor {
 onResult: ({ args, result, classInfo }) => void
 ```
 
-- Called **immediately** after each class's method executes (inside `ClassInfo.run()`).
+- Called after each class's method executes.
+  - **`run` (sync)**: fired synchronously inside `ClassInfo.run` immediately after the method returns.
+  - **`runAsync`** (since v1.0.12): fired after the method's returned Promise resolves, with the resolved value as `result`. Internally `ClassInfo.run` chains `.then()` so the callback is part of the awaited Promise chain — the next class's body does not start until the previous `onResult` has fired.
 - NOT called for `ignoredResultSymbol` results (non-executable methods).
 - Fires in execution order (deps first, then dependents).
 - Receives the method result and access to `classInfo` (including `classInfo.name`).
+- **Side effect**: passing `onResult` to `runAsync` switches execution from parallel to sequential (see §6 Sequential Semantics).
 
 ### onCreate (for digest)
 
@@ -416,6 +439,7 @@ Where each entry is:
 - Results are in **execution order** (dependency order), not registration order.
 - Only includes classes that actually produced results (excludes `ignoredResultSymbol`).
 - Available on `run()`, `runAsync()`, and `digest()`.
+- **For `runAsync`** (since v1.0.12): each `result` field is the resolved value, never a `Promise`. (Previously, async methods caused entries to contain unresolved Promises.)
 
 ### Source
 
@@ -589,6 +613,8 @@ await azldi.runAsync('findHandler', [query], {
 
 ## Appendix: Existing Test Coverage Gap Analysis
 
+> **Note**: this gap analysis is a snapshot of an early state. The current test suite ([test/library/index.spec.ts](../test/library/index.spec.ts)) has 102 passing tests and covers most of the items previously listed as untested. The "NOT Tested" table below is preserved for historical reference and may not reflect current coverage.
+
 ### Currently Tested (in `test/library/index.spec.ts`)
 
 | Feature | Covered |
@@ -602,6 +628,12 @@ await azldi.runAsync('findHandler', [query], {
 | `runAsync` with `onResultsInfoByDeps` + `sortResultsByDeps` | Yes |
 | `ignoreNonexecutableByDefault: true` | Yes |
 | `ignoreNonexecutable: false` override (throws) | Yes |
+| **`runAsync` + `onResult` receives resolved value (not Promise)** (v1.0.12) | Yes |
+| **`runAsync` + `onResult` transform-chain semantics** (v1.0.12) | Yes |
+| **`runAsync` + `onResult` sequential ordering** (v1.0.12) | Yes |
+| **`runAsync` + `shortCircuit` + `onResult` receives resolved value** (v1.0.12) | Yes |
+| **`runAsync` + `onResultsInfoByDeps` receives resolved values** (v1.0.12) | Yes |
+| **`runAsync` without `onResult` stays parallel** (v1.0.12) | Yes |
 
 ### NOT Tested
 

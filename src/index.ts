@@ -35,6 +35,7 @@ export type CreateOptions<ClassBase, Result> = {
 export type RunCoreOptions<ClassBase, Result> = {
   ignoreNonexecutable?: boolean | null;
   shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
+  sequentialAsync?: boolean;
 };
 
 export type RunOptions<ClassBase, Result> = {
@@ -90,7 +91,7 @@ export default class Azldi<ClassBase> {
     runSync = true,
     options: RunCoreOptions<ClassBase, T> = {},
   ) {
-    const { shortCircuit } = options;
+    const { shortCircuit, sequentialAsync } = options;
 
     const metadataMap: any = {};
     const runBeforeMap: any = {};
@@ -140,6 +141,7 @@ export default class Azldi<ClassBase> {
         runSync,
         ignoreNonexecutable: options.ignoreNonexecutable,
         shortCircuitState,
+        sequentialAsync,
       };
       return (async () => {
         const results: any[] = [];
@@ -151,6 +153,23 @@ export default class Azldi<ClassBase> {
             && shortCircuit({ args, result: <any>resolved, classInfo: componentMetadata.classInfo })) {
             shortCircuitState.shortCircuited = true;
           }
+        }
+        return results;
+      })();
+    }
+
+    if (!runSync && sequentialAsync) {
+      const cmOptions = {
+        callback,
+        runSync,
+        ignoreNonexecutable: options.ignoreNonexecutable,
+        sequentialAsync,
+      };
+      return (async () => {
+        const results: any[] = [];
+        for (const componentMetadata of metadataArray) {
+          const resolved = await componentMetadata.getProcessFunc<T>(cmOptions)(...args);
+          results.push(resolved);
         }
         return results;
       })();
@@ -226,14 +245,16 @@ export default class Azldi<ClassBase> {
     return (result as any[]).filter(r => r !== ignoredResultSymbol);
   }
 
-  runAsync<T=any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs = [], {
-    onResult = (() => {}),
-    appendArgs = {},
-    onResultsInfoByDeps,
-    sortResultsByDeps,
-    ignoreNonexecutable,
-    shortCircuit,
-  }: RunOptions<ClassBase, T> = {}) : Promise<T[]> {
+  runAsync<T=any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs = [], options: RunOptions<ClassBase, T> = {}) : Promise<T[]> {
+    const userProvidedOnResult = options.onResult != null;
+    const {
+      onResult = (() => {}),
+      appendArgs = {},
+      onResultsInfoByDeps,
+      sortResultsByDeps,
+      ignoreNonexecutable,
+      shortCircuit,
+    } = options;
     let cb = onResult;
     const resultsInfo: ClassInfoRunCallbackArg<ClassBase, T>[] = [];
     if (onResultsInfoByDeps || sortResultsByDeps || shortCircuit) {
@@ -245,6 +266,7 @@ export default class Azldi<ClassBase> {
     return (this._run(functionName, args, appendArgs, cb, false, {
       ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
       shortCircuit,
+      sequentialAsync: userProvidedOnResult,
     }) as Promise<any[]>)
     .then((result) => {
       if (onResultsInfoByDeps) {

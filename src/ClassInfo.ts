@@ -5,6 +5,7 @@ export type ClassInfoRunArgs = any[];
 
 export type ClassInfoRunOptions<ClassBase, Result> = {
   ignoreNonexecutable?: boolean | null;
+  runSync?: boolean;
 };
 
 export type ClassInfoRunCallbackArg<ClassBase, Result> = {
@@ -67,13 +68,24 @@ export default class ClassInfo<ClassBase> {
   run = <T = any>(functionName: ClassInfoFunctionName<ClassBase>, args: ClassInfoRunArgs, callback: ClassInfoRunCallback<ClassBase, T>, options: ClassInfoRunOptions<ClassBase, T> = {}) => {
     const func = this.getRunFunction<T>(functionName, options);
     const result = (<any>func)(...args);
-    if (result !== ignoredResultSymbol) {
-      callback({
-        args,
-        result,
-        classInfo: this,
+    if (result === ignoredResultSymbol) {
+      return <T>result;
+    }
+    if (options.runSync === false && result && typeof (<any>result).then === 'function') {
+      return <T><any>(<any>result).then((resolved: T) => {
+        callback({
+          args,
+          result: resolved,
+          classInfo: this,
+        });
+        return resolved;
       });
     }
+    callback({
+      args,
+      result,
+      classInfo: this,
+    });
     return <T>result;
   };
 }

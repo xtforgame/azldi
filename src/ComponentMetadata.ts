@@ -15,6 +15,7 @@ export type ComponentMetadataRunOptions<ClassBase, Result> = {
   runSync?: boolean;
   ignoreNonexecutable?: boolean | null;
   shortCircuitState?: ShortCircuitState;
+  sequentialAsync?: boolean;
 };
 
 export default class ComponentMetadata<ClassBase> {
@@ -91,7 +92,10 @@ export default class ComponentMetadata<ClassBase> {
     if (options.shortCircuitState?.shortCircuited) {
       return ignoredResultSymbol as any as T;
     }
-    this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback, { ignoreNonexecutable: options.ignoreNonexecutable });
+    this.result = this.classInfo.run(functionName, [...args, ...this.appendArgs], callback, {
+      ignoreNonexecutable: options.ignoreNonexecutable,
+      runSync: options.runSync,
+    });
     this.isDone = true;
     return this.result as T;
   };
@@ -133,6 +137,19 @@ export default class ComponentMetadata<ClassBase> {
         callback,
         options
       );
+    } else if (options.sequentialAsync) {
+      this.processFunc = async (...args: any[]) => {
+        const results: any[] = [];
+        for (const depRunFunc of this.depRunFuncs) {
+          results.push(await depRunFunc(...args));
+        }
+        return this.run(
+          this.functionName,
+          injectedResult.inject(results, args),
+          callback,
+          options
+        );
+      };
     } else {
       this.processFunc = (...args: any[]) => Promise.all(this.depRunFuncs.map(depRunFunc => depRunFunc(...args)))
       .then(results => this.run(
