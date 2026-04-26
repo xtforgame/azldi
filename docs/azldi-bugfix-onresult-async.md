@@ -1,6 +1,6 @@
 # AZLDI Bug: `runAsync` 的 `onResult` callback 收到 Promise 而非 resolved value
 
-> azldi v1.0.11 → 已於 v1.0.12 修復
+> azldi v1.0.11 → 已於 v1.1.1 修復
 
 ## 0. 修復狀態
 
@@ -13,18 +13,21 @@
 | [src/ClassInfo.ts](../src/ClassInfo.ts) | `run` 在 `runSync === false` 且回傳值是 thenable 時，把 callback 推遲到 `.then(resolved => ...)` 內呼叫，並回傳串接的 Promise |
 | [src/ClassInfo.ts](../src/ClassInfo.ts) | `ClassInfoRunOptions` 新增 `runSync?: boolean` 欄位 |
 | [src/ComponentMetadata.ts](../src/ComponentMetadata.ts) | `run` 把 `options.runSync` 透傳給 `classInfo.run` |
+| [src/ComponentMetadata.ts](../src/ComponentMetadata.ts) | `ComponentMetadataRunOptions` 新增 `sequentialAsync?: boolean`；`getProcessFunc` async 分支在此 flag 為 true 時改用 `for...of + await` 跑 deps，避免 sibling deps race |
 | [src/index.ts](../src/index.ts) | `RunCoreOptions` 新增 `sequentialAsync?: boolean` |
-| [src/index.ts](../src/index.ts) | `_run` 在 `!runSync && sequentialAsync && !shortCircuit` 時改走 `for...of + await` 的 sequential async loop |
-| [src/index.ts](../src/index.ts) | `runAsync` 偵測 `options.onResult != null`（在套用預設值前），並在無 `shortCircuit` 時設 `sequentialAsync: true` |
+| [src/index.ts](../src/index.ts) | `_run` 在 `!runSync && sequentialAsync` (且非 `shortCircuit`) 時改走 `for...of + await` 的 sequential top-level loop |
+| [src/index.ts](../src/index.ts) | `_run` 把 `sequentialAsync` 透傳到所有 async 路徑的 `cmOptions`（包含 shortCircuit 的 async branch） |
+| [src/index.ts](../src/index.ts) | `runAsync` 偵測 `options.onResult != null`（在套用預設值前），設 `sequentialAsync: userProvidedOnResult` |
 
 ### 採用的方案
 
 採用原文 §5 的**方案 A** + ClassInfo.run 內部 await。最終結合：
 
 1. **ClassInfo.run 同步偵測 thenable**：對 async function 回傳值做 `.then(...)` chain，把 callback 推遲到 resolved 之後。這樣 `onResult` / `resultsInfo.push` / `onResultsInfoByDeps` 全部都拿到 resolved value。
-2. **`_run` 在有 `onResult` 時切 sequential**：保證 transform chain 語義（前一個 plugin 的 `onResult` 完成後，後一個 plugin 才開始 body 執行）。
+2. **`_run` 在有 `onResult` 時切 sequential（top-level）**：保證 transform chain 語義（前一個 plugin 的 `onResult` 完成後，後一個 plugin 才開始 body 執行）。
+3. **`ComponentMetadata` 在有 `onResult` 時切 sequential（dep 內部）**：避免 sibling deps（同一個 method 的多個 `$funcDeps` / `$runBefore`）透過 `Promise.all` 平行造成 onResult 順序競爭。
 
-無 `onResult`、無 `shortCircuit` 時仍維持 parallel（向後相容、效能）。`shortCircuit` 路徑本來就是 sequential，搭配 ClassInfo.run 的修改，`onResult` 也會收到 resolved value。
+無 `onResult`、無 `shortCircuit` 時仍維持 parallel（向後相容、效能）。`shortCircuit` 沒搭 `onResult` 時 top-level 仍是 sequential，但 dep 內部維持 parallel；搭配 `onResult` 時兩層都 sequential。
 
 ### 行為矩陣
 
@@ -32,11 +35,23 @@
 |------|--------|--------|
 | `runAsync` + `onResult` + async method | `result = Promise<T>` | `result = T` |
 | `runAsync` + `onResult` + transform chain (getter) | parallel，後者讀 stale 值 | sequential，後者讀 transformed 值 |
+| `runAsync` + `onResult` + 多個 sibling deps | sibling 透過 `Promise.all` 平行，onResult 順序非 deterministic | dep 內部也 sequential，onResult 按 registration order 觸發 |
 | `runAsync` + `onResultsInfoByDeps` + async method | `info[i].result = Promise<T>` | `info[i].result = T` |
-| `runAsync` + `shortCircuit` + `onResult` | onResult 收 Promise | onResult 收 resolved value |
+| `runAsync` + `shortCircuit` + `onResult` | onResult 收 Promise；sibling deps 仍 race | onResult 收 resolved value；sibling deps sequential |
 | `runAsync` 無 `onResult`/`shortCircuit` | parallel | parallel（不變） |
 | `run` (sync) | 不變 | 不變 |
 | `digest` + `onCreate` | 不變（sync） | 不變 |
+
+### 觸發條件總表
+
+| 條件 | top-level 行為 | dep 內部行為 |
+|------|----------------|--------------|
+| 無 `onResult` 無 `shortCircuit` | parallel | parallel |
+| 有 `onResult` 無 `shortCircuit` | **sequential** | **sequential** |
+| 無 `onResult` 有 `shortCircuit` | sequential（既有） | parallel |
+| 有 `onResult` 有 `shortCircuit` | sequential | **sequential** |
+
+口訣：**`onResult` 觸發兩層 sequential；`shortCircuit` 只觸發 top-level sequential。**
 
 ### 新增測試
 
@@ -48,6 +63,8 @@
 - ✓ shortCircuit + onResult: onResult also receives resolved value
 - ✓ without onResult: parallel execution still works
 - ✓ onResultsInfoByDeps receives resolved values (not Promises) for async methods
+- ✓ sibling deps: onResult fires in registration order even when slow dep is registered first
+- ✓ sibling deps + shortCircuit + onResult: siblings fire in deterministic order
 
 ---
 

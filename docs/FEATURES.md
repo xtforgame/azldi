@@ -268,10 +268,18 @@ Same as `run()`.
 
 - Same as `run()` but handles Promise-returning methods.
 - Dependencies are resolved via `Promise.all()` before the dependent method executes.
-- **Execution mode**:
-  - **Parallel** (default): when no `onResult` and no `shortCircuit` are provided, all top-level classes start their `processFunc` synchronously and resolve via `Promise.all()`.
-  - **Sequential**: when `onResult` is provided (without `shortCircuit`) or `shortCircuit` is provided, classes execute one-by-one in dependency order. Each `await` completes — including any callback firing — before the next class starts.
-- **Callback timing for async methods** (since v1.0.12): `onResult` / `onResultsInfoByDeps` always receive the **resolved value**, never a `Promise`. `ClassInfo.run` defers callback firing via `.then()` when the method returns a thenable.
+- **Execution mode** (since v1.1.1):
+
+  | 條件 | top-level | sibling deps inside `processFunc` |
+  |------|-----------|-----------------------------------|
+  | 無 `onResult` 無 `shortCircuit` | parallel (`Promise.all`) | parallel (`Promise.all`) |
+  | 有 `onResult` 無 `shortCircuit` | **sequential** (`for...of + await`) | **sequential** |
+  | 無 `onResult` 有 `shortCircuit` | sequential | parallel |
+  | 有 `onResult` 有 `shortCircuit` | sequential | **sequential** |
+
+  Mnemonic: **`onResult` triggers both levels sequential; `shortCircuit` triggers only top-level sequential.**
+
+- **Callback timing for async methods** (since v1.1.1): `onResult` / `onResultsInfoByDeps` always receive the **resolved value**, never a `Promise`. `ClassInfo.run` defers callback firing via `.then()` when the method returns a thenable.
 - Final results are awaited via `Promise.all()` before returning.
 
 ### Sequential Semantics & Transform Chain
@@ -288,6 +296,8 @@ await azldi.runAsync('transform', [getValue], {
 // PluginA reads getValue() = 100, returns 110 → onResult sets value = 110
 // PluginB reads getValue() = 110 (sequential), returns 130 → onResult sets value = 130
 ```
+
+When `onResult` is provided, this guarantee extends **both to top-level classes and to sibling `$funcDeps` / `$runBefore` of any single class**. Sibling deps fire in registration order, never racing through `Promise.all`.
 
 Without `onResult` (or `shortCircuit`), `runAsync` stays parallel for performance.
 
@@ -397,7 +407,7 @@ onResult: ({ args, result, classInfo }) => void
 
 - Called after each class's method executes.
   - **`run` (sync)**: fired synchronously inside `ClassInfo.run` immediately after the method returns.
-  - **`runAsync`** (since v1.0.12): fired after the method's returned Promise resolves, with the resolved value as `result`. Internally `ClassInfo.run` chains `.then()` so the callback is part of the awaited Promise chain — the next class's body does not start until the previous `onResult` has fired.
+  - **`runAsync`** (since v1.1.1): fired after the method's returned Promise resolves, with the resolved value as `result`. Internally `ClassInfo.run` chains `.then()` so the callback is part of the awaited Promise chain — the next class's body does not start until the previous `onResult` has fired.
 - NOT called for `ignoredResultSymbol` results (non-executable methods).
 - Fires in execution order (deps first, then dependents).
 - Receives the method result and access to `classInfo` (including `classInfo.name`).
@@ -439,7 +449,7 @@ Where each entry is:
 - Results are in **execution order** (dependency order), not registration order.
 - Only includes classes that actually produced results (excludes `ignoredResultSymbol`).
 - Available on `run()`, `runAsync()`, and `digest()`.
-- **For `runAsync`** (since v1.0.12): each `result` field is the resolved value, never a `Promise`. (Previously, async methods caused entries to contain unresolved Promises.)
+- **For `runAsync`** (since v1.1.1): each `result` field is the resolved value, never a `Promise`. (Previously, async methods caused entries to contain unresolved Promises.)
 
 ### Source
 
@@ -628,12 +638,14 @@ await azldi.runAsync('findHandler', [query], {
 | `runAsync` with `onResultsInfoByDeps` + `sortResultsByDeps` | Yes |
 | `ignoreNonexecutableByDefault: true` | Yes |
 | `ignoreNonexecutable: false` override (throws) | Yes |
-| **`runAsync` + `onResult` receives resolved value (not Promise)** (v1.0.12) | Yes |
-| **`runAsync` + `onResult` transform-chain semantics** (v1.0.12) | Yes |
-| **`runAsync` + `onResult` sequential ordering** (v1.0.12) | Yes |
-| **`runAsync` + `shortCircuit` + `onResult` receives resolved value** (v1.0.12) | Yes |
-| **`runAsync` + `onResultsInfoByDeps` receives resolved values** (v1.0.12) | Yes |
-| **`runAsync` without `onResult` stays parallel** (v1.0.12) | Yes |
+| **`runAsync` + `onResult` receives resolved value (not Promise)** (v1.1.1) | Yes |
+| **`runAsync` + `onResult` transform-chain semantics** (v1.1.1) | Yes |
+| **`runAsync` + `onResult` sequential ordering** (v1.1.1) | Yes |
+| **`runAsync` + `shortCircuit` + `onResult` receives resolved value** (v1.1.1) | Yes |
+| **`runAsync` + `onResultsInfoByDeps` receives resolved values** (v1.1.1) | Yes |
+| **`runAsync` without `onResult` stays parallel** (v1.1.1) | Yes |
+| **`runAsync` + `onResult` sibling deps fire in registration order (no race)** (v1.1.1) | Yes |
+| **`runAsync` + `shortCircuit` + `onResult` + sibling deps deterministic** (v1.1.1) | Yes |
 
 ### NOT Tested
 
