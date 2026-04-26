@@ -19,6 +19,7 @@ export type CreateOptions<ClassBase, Result> = {
 export type RunCoreOptions<ClassBase, Result> = {
     ignoreNonexecutable?: boolean | null;
     shortCircuit?: (arg: ClassInfoRunCallbackArg<ClassBase, Result>) => boolean;
+    sequentialAsync?: boolean;
 };
 export type RunOptions<ClassBase, Result> = {
     onResult?: ClassInfoRunCallback<ClassBase, Result>;
@@ -45,5 +46,5 @@ export default class Azldi<ClassBase> {
     digest({ onCreate, args, appendArgs, onResultsInfoByDeps, sortResultsByDeps, }?: CreateOptions<ClassBase, ClassBase>): any[] | Promise<any[]>;
     getEmptyRunResultsInfo<T = any>(): ClassInfoRunCallbackArg<ClassBase, T>[];
     run<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, shortCircuit, }?: RunOptions<ClassBase, T>): T[];
-    runAsync<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, { onResult, appendArgs, onResultsInfoByDeps, sortResultsByDeps, ignoreNonexecutable, shortCircuit, }?: RunOptions<ClassBase, T>): Promise<T[]>;
+    runAsync<T = any>(functionName: ClassInfoFunctionName<ClassBase>, args?: ClassInfoRunArgs, options?: RunOptions<ClassBase, T>): Promise<T[]>;
 }

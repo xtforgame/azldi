@@ -3,6 +3,7 @@ export type ClassInfoFunctionName<ClassBase> = (keyof ClassBase) | undefined;
 export type ClassInfoRunArgs = any[];
 export type ClassInfoRunOptions<ClassBase, Result> = {
     ignoreNonexecutable?: boolean | null;
+    runSync?: boolean;
 };
 export type ClassInfoRunCallbackArg<ClassBase, Result> = {
     args: any[];

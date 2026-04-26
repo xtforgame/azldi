@@ -52,7 +52,8 @@ var Azldi = /*#__PURE__*/function () {
     value: function _run(functionName, args, appendArgs, callback) {
       var runSync = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
       var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
-      var shortCircuit = options.shortCircuit;
+      var shortCircuit = options.shortCircuit,
+        sequentialAsync = options.sequentialAsync;
       var metadataMap = {};
       var runBeforeMap = {};
       var metadataArray = [];
@@ -109,7 +110,8 @@ var Azldi = /*#__PURE__*/function () {
           callback: callback,
           runSync: runSync,
           ignoreNonexecutable: options.ignoreNonexecutable,
-          shortCircuitState: shortCircuitState
+          shortCircuitState: shortCircuitState,
+          sequentialAsync: sequentialAsync
         };
         return _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
           var results, _iterator2, _step2, _componentMetadata, resolved;
@@ -167,6 +169,56 @@ var Azldi = /*#__PURE__*/function () {
           }, _callee, null, [[2, 17, 20, 23]]);
         }))();
       }
+      if (!runSync && sequentialAsync) {
+        var _cmOptions2 = {
+          callback: callback,
+          runSync: runSync,
+          ignoreNonexecutable: options.ignoreNonexecutable,
+          sequentialAsync: sequentialAsync
+        };
+        return _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee2() {
+          var results, _iterator3, _step3, _componentMetadata2, resolved;
+          return _regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) switch (_context2.prev = _context2.next) {
+              case 0:
+                results = [];
+                _iterator3 = _createForOfIteratorHelper(metadataArray);
+                _context2.prev = 2;
+                _iterator3.s();
+              case 4:
+                if ((_step3 = _iterator3.n()).done) {
+                  _context2.next = 12;
+                  break;
+                }
+                _componentMetadata2 = _step3.value;
+                _context2.next = 8;
+                return _componentMetadata2.getProcessFunc(_cmOptions2).apply(void 0, _toConsumableArray(args));
+              case 8:
+                resolved = _context2.sent;
+                results.push(resolved);
+              case 10:
+                _context2.next = 4;
+                break;
+              case 12:
+                _context2.next = 17;
+                break;
+              case 14:
+                _context2.prev = 14;
+                _context2.t0 = _context2["catch"](2);
+                _iterator3.e(_context2.t0);
+              case 17:
+                _context2.prev = 17;
+                _iterator3.f();
+                return _context2.finish(17);
+              case 20:
+                return _context2.abrupt("return", results);
+              case 21:
+              case "end":
+                return _context2.stop();
+            }
+          }, _callee2, null, [[2, 14, 17, 20]]);
+        }))();
+      }
       var results = metadataArray.map(function (componentMetadata) {
         var result = componentMetadata.getProcessFunc({
           callback: callback,
@@ -180,15 +232,15 @@ var Azldi = /*#__PURE__*/function () {
   }, {
     key: "digest",
     value: function digest() {
-      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        _ref2$onCreate = _ref2.onCreate,
-        onCreate = _ref2$onCreate === void 0 ? function () {} : _ref2$onCreate,
-        _ref2$args = _ref2.args,
-        args = _ref2$args === void 0 ? [] : _ref2$args,
-        _ref2$appendArgs = _ref2.appendArgs,
-        appendArgs = _ref2$appendArgs === void 0 ? {} : _ref2$appendArgs,
-        onResultsInfoByDeps = _ref2.onResultsInfoByDeps,
-        sortResultsByDeps = _ref2.sortResultsByDeps;
+      var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref3$onCreate = _ref3.onCreate,
+        onCreate = _ref3$onCreate === void 0 ? function () {} : _ref3$onCreate,
+        _ref3$args = _ref3.args,
+        args = _ref3$args === void 0 ? [] : _ref3$args,
+        _ref3$appendArgs = _ref3.appendArgs,
+        appendArgs = _ref3$appendArgs === void 0 ? {} : _ref3$appendArgs,
+        onResultsInfoByDeps = _ref3.onResultsInfoByDeps,
+        sortResultsByDeps = _ref3.sortResultsByDeps;
       var cb = onCreate;
       var resultsInfo = [];
       if (onResultsInfoByDeps || sortResultsByDeps) {
@@ -217,15 +269,15 @@ var Azldi = /*#__PURE__*/function () {
     key: "run",
     value: function run(functionName) {
       var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-      var _ref3 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-        _ref3$onResult = _ref3.onResult,
-        onResult = _ref3$onResult === void 0 ? function () {} : _ref3$onResult,
-        _ref3$appendArgs = _ref3.appendArgs,
-        appendArgs = _ref3$appendArgs === void 0 ? {} : _ref3$appendArgs,
-        onResultsInfoByDeps = _ref3.onResultsInfoByDeps,
-        sortResultsByDeps = _ref3.sortResultsByDeps,
-        ignoreNonexecutable = _ref3.ignoreNonexecutable,
-        shortCircuit = _ref3.shortCircuit;
+      var _ref4 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+        _ref4$onResult = _ref4.onResult,
+        onResult = _ref4$onResult === void 0 ? function () {} : _ref4$onResult,
+        _ref4$appendArgs = _ref4.appendArgs,
+        appendArgs = _ref4$appendArgs === void 0 ? {} : _ref4$appendArgs,
+        onResultsInfoByDeps = _ref4.onResultsInfoByDeps,
+        sortResultsByDeps = _ref4.sortResultsByDeps,
+        ignoreNonexecutable = _ref4.ignoreNonexecutable,
+        shortCircuit = _ref4.shortCircuit;
       var cb = onResult;
       var resultsInfo = [];
       if (onResultsInfoByDeps || sortResultsByDeps || shortCircuit) {
@@ -254,15 +306,16 @@ var Azldi = /*#__PURE__*/function () {
     key: "runAsync",
     value: function runAsync(functionName) {
       var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-      var _ref4 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-        _ref4$onResult = _ref4.onResult,
-        onResult = _ref4$onResult === void 0 ? function () {} : _ref4$onResult,
-        _ref4$appendArgs = _ref4.appendArgs,
-        appendArgs = _ref4$appendArgs === void 0 ? {} : _ref4$appendArgs,
-        onResultsInfoByDeps = _ref4.onResultsInfoByDeps,
-        sortResultsByDeps = _ref4.sortResultsByDeps,
-        ignoreNonexecutable = _ref4.ignoreNonexecutable,
-        shortCircuit = _ref4.shortCircuit;
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var userProvidedOnResult = options.onResult != null;
+      var _options$onResult = options.onResult,
+        onResult = _options$onResult === void 0 ? function () {} : _options$onResult,
+        _options$appendArgs = options.appendArgs,
+        appendArgs = _options$appendArgs === void 0 ? {} : _options$appendArgs,
+        onResultsInfoByDeps = options.onResultsInfoByDeps,
+        sortResultsByDeps = options.sortResultsByDeps,
+        ignoreNonexecutable = options.ignoreNonexecutable,
+        shortCircuit = options.shortCircuit;
       var cb = onResult;
       var resultsInfo = [];
       if (onResultsInfoByDeps || sortResultsByDeps || shortCircuit) {
@@ -273,7 +326,8 @@ var Azldi = /*#__PURE__*/function () {
       }
       return this._run(functionName, args, appendArgs, cb, false, {
         ignoreNonexecutable: ignoreNonexecutable == null ? this.options.ignoreNonexecutableByDefault : ignoreNonexecutable,
-        shortCircuit: shortCircuit
+        shortCircuit: shortCircuit,
+        sequentialAsync: userProvidedOnResult
       }).then(function (result) {
         if (onResultsInfoByDeps) {
           onResultsInfoByDeps(resultsInfo);

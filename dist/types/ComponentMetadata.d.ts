@@ -8,6 +8,7 @@ export type ComponentMetadataRunOptions<ClassBase, Result> = {
     runSync?: boolean;
     ignoreNonexecutable?: boolean | null;
     shortCircuitState?: ShortCircuitState;
+    sequentialAsync?: boolean;
 };
 export default class ComponentMetadata<ClassBase> {
     classInfo: ClassInfo<ClassBase>;

@@ -46,13 +46,24 @@ var ClassInfo = /*#__PURE__*/_createClass(function ClassInfo(Class) {
     var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
     var func = _this.getRunFunction(functionName, options);
     var result = func.apply(void 0, _toConsumableArray(args));
-    if (result !== ignoredResultSymbol) {
-      callback({
-        args: args,
-        result: result,
-        classInfo: _this
+    if (result === ignoredResultSymbol) {
+      return result;
+    }
+    if (options.runSync === false && result && typeof result.then === 'function') {
+      return result.then(function (resolved) {
+        callback({
+          args: args,
+          result: resolved,
+          classInfo: _this
+        });
+        return resolved;
       });
     }
+    callback({
+      args: args,
+      result: result,
+      classInfo: _this
+    });
     return result;
   });
   this.Class = Class;
